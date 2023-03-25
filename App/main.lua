@@ -19,7 +19,7 @@ function love.load()
 	
 	tileSize = 16
 	tileset = nil
-	tile = 0
+	tileid = 0
 	tilequad = nil
 	tilex = 0
 	tiley = 0
@@ -141,7 +141,7 @@ function love.update(dt)
 		minGUI:clear_canvas(1, 0, 0, 0, 1)
 		
 		redraw_map()
-		redraw_tilemap_grid()		
+		redraw_tilemap_grid()
 	end
 		
 	-- ============================================
@@ -151,8 +151,11 @@ function love.update(dt)
 		if tileSize == 32 then
 			tileSize = 16
 
-			minGUI:clear_canvas(1, 0, 0, 0, 1)
-			minGUI:clear_canvas(2, 0, 0, 0, 1)
+			-- reset quad size
+			requad_all()
+			
+			-- clear the map
+			clear_map()
 			
 			redraw_tileset()
 			redraw_tileset_grid()
@@ -162,10 +165,13 @@ function love.update(dt)
 	elseif minGUI:get_gadget_state(5) == true then
 		if tileSize == 16 then			
 			tileSize = 32
+
+			-- reset quad size
+			requad_all()
 			
-			minGUI:clear_canvas(1, 0, 0, 0, 1)
-			minGUI:clear_canvas(2, 0, 0, 0, 1)
-			
+			-- clear the map
+			clear_map()
+
 			redraw_tileset()
 			redraw_tileset_grid()
 			redraw_map()
@@ -178,8 +184,6 @@ function love.update(dt)
 	-- get the zoom for the tilemap
 	if minGUI:get_gadget_state(9) == true then
 		if tilemapZoom == 1 then
-			minGUI:clear_canvas(1, 0, 0, 0, 1)
-
 			tilemapZoom = 2
 			
 			redraw_map()
@@ -187,8 +191,6 @@ function love.update(dt)
 		end
 	else
 		if tilemapZoom == 2 then
-			minGUI:clear_canvas(1, 0, 0, 0, 1)
-
 			tilemapZoom = 1			
 			
 			redraw_map()
@@ -203,16 +205,12 @@ function love.update(dt)
 		if tilesetZoom == 1 then
 			tilesetZoom = 2
 			
-			minGUI:clear_canvas(2, 0, 0, 0, 1)
-			
 			redraw_tileset()
 			redraw_tileset_grid()
 		end
 	else
 		if tilesetZoom == 2 then
 			tilesetZoom = 1
-			
-			minGUI:clear_canvas(2, 0, 0, 0, 1)
 			
 			redraw_tileset()
 			redraw_tileset_grid()
@@ -274,7 +272,7 @@ function love.update(dt)
 						local x = x2 * (tileSize * tilemapZoom)
 						local y = y2 * (tileSize * tilemapZoom)
 				
-						map[x2][y2] = tile
+						map[x2][y2] = tileid
 				
 						minGUI:draw_rectangle_to_canvas(1, "fill", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, BLACK)
 						minGUI:draw_quad_to_canvas(1, tileset, quad[map[x2][y2]], x, y, tilemapZoom, tilemapZoom)
@@ -290,10 +288,8 @@ function love.update(dt)
 				if tilex > (tilesetWidth * tilesetZoom / tileSize) - 1 then tilex = (tilesetWidth * tilesetZoom / tileSize) - 1 end
 				if tiley > (tilesetHeight * tilesetZoom / tileSize) - 1 then tiley = (tilesetHeight * tilesetZoom / tileSize) - 1 end
 				
-				tile = tilex + (tiley * (tilesetWidth / tileSize))
+				tileid = tilex + (tiley * (tilesetWidth / tileSize))
 				
-				minGUI:clear_canvas(2, 0, 0, 0, 1)
-			
 				redraw_tileset()
 				redraw_tileset_grid()
 			end
@@ -337,6 +333,8 @@ end
 function redraw_map()
 	-- exit function on error
 	if tileset == nil then return end
+
+	minGUI:clear_canvas(1, 0, 0, 0, 1)
 	
 	-- draw the grid on first canvas, and the tilemap
 	for y = 0, (mapHeight - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do
@@ -398,11 +396,26 @@ function load_tileset()
 		tilex = 0
 		tiley = 0
 		tile = tilex + (tiley * (tilesetWidth / tileSize))
-				
-		for y = 0, (tilesetHeight / tileSize) - 1 do
-			for x = 0, (tilesetWidth / tileSize) - 1 do
-				quad[x + (y * (tilesetWidth / tileSize))] = love.graphics.newQuad(x * tileSize, y * tileSize, tileSize, tileSize, tilesetWidth, tilesetHeight)
-			end
+		
+		-- reset quad size
+		requad_all()
+	end
+end
+
+-- reset quad size
+function requad_all()
+	for y = 0, (tilesetHeight / tileSize) - 1 do
+		for x = 0, (tilesetWidth / tileSize) - 1 do
+			quad[x + (y * (tilesetWidth / tileSize))] = love.graphics.newQuad(x * tileSize, y * tileSize, tileSize, tileSize, tilesetWidth, tilesetHeight)
+		end
+	end
+end
+
+-- clear the full tilemap
+function clear_map()
+	for x = 0, MAX_MAP_SIZE - 1 do
+		for y = 0, MAX_MAP_SIZE - 1 do
+			map[x][y] = 0
 		end
 	end
 end
