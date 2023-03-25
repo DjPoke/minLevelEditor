@@ -87,7 +87,7 @@ function love.load()
 	
 	-- load a tileset
 	minGUI:add_label(6, 8, 8, 100, 25, "TILESET", MG_ALIGN_CENTER,  5)
-	minGUI:add_string(7, 8, 37, 100, 25, "tileset.png", nil, 5)
+	minGUI:add_string(7, 8, 37, 100, 25, "", nil, 5)
 	minGUI:add_button(8, 8, 64, 100, 25, "Load", 5)
 
 	-- zoom x 2 checkboxes
@@ -237,26 +237,7 @@ function love.update(dt)
 	-- if button 8 has been clicked, load the tileset
 	if eventType == MG_EVENT_MOUSE_CLICK then
 		if eventGadget == 8 then
-			-- does the file exists ?
-			if minGUI_get_file_exists(minGUI:get_gadget_text(7)) == true then
-				-- load the tileset
-				tileset = love.graphics.newImage(minGUI:get_gadget_text(7))
-				
-				-- draw it to the canvas
-				redraw_tileset()
-				redraw_tileset_grid()
-
-				-- setup the selected tile
-				tilex = 0
-				tiley = 0
-				tile = tilex + (tiley * (tilesetWidth / tileSize))
-				
-				for y = 0, (tilesetHeight / tileSize) - 1 do
-					for x = 0, (tilesetWidth / tileSize) - 1 do
-						quad[x + (y * (tilesetWidth / tileSize))] = love.graphics.newQuad(x * tileSize, y * tileSize, tileSize, tileSize, tilesetWidth, tilesetHeight)
-					end
-				end
-			end
+			load_tileset()
 		elseif eventGadget == 11 then
 			export_string = "map = {\r\n"
 
@@ -378,4 +359,47 @@ function redraw_tileset()
 	end
 end
 		
+function love.filedropped(file)
+	filename = file:getFilename()
+	ext = filename:match("%.%w+$")
 
+	if ext == ".png" then
+		minGUI:set_gadget_text(7, "temp.png")
+
+		file:open("r")
+		local fileData = file:read("data")
+
+		local success, message = love.filesystem.write("temp.png", fileData)
+
+		if success then
+			load_tileset()
+		else 
+			love.window.showMessageBox("error", "File can't be imported !", "error", true)
+		end
+	else
+		love.window.showMessageBox("error", "Must be a png file ! ", "error", true)
+	end
+end
+
+function load_tileset()
+	-- does the file exists ?
+	if minGUI_get_file_exists(minGUI:get_gadget_text(7)) == true then
+		-- load the tileset
+		tileset = love.graphics.newImage(minGUI:get_gadget_text(7))
+				
+		-- draw it to the canvas
+		redraw_tileset()
+		redraw_tileset_grid()
+
+		-- setup the selected tile
+		tilex = 0
+		tiley = 0
+		tile = tilex + (tiley * (tilesetWidth / tileSize))
+				
+		for y = 0, (tilesetHeight / tileSize) - 1 do
+			for x = 0, (tilesetWidth / tileSize) - 1 do
+				quad[x + (y * (tilesetWidth / tileSize))] = love.graphics.newQuad(x * tileSize, y * tileSize, tileSize, tileSize, tilesetWidth, tilesetHeight)
+			end
+		end
+	end
+end
