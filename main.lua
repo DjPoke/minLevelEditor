@@ -64,12 +64,12 @@ function love.load()
 	minGUI:set_bgcolor(0.5, 0.5, 0.5, 1)
 
 	-- add all panels
-	minGUI:add_panel(1, 0, 0, 352, 557)
-	minGUI:add_panel(2, 352, 0, 1040, 557)
-	minGUI:add_panel(3, 1392, 0, 528, 557)
+	minGUI:add_panel(1, 0, 0, 128, 557)
+	minGUI:add_panel(2, 128, 0, 1040, 557)
+	minGUI:add_panel(3, 1168, 0, 528, 557)
 	minGUI:add_panel(4, 8, 8, 112, 96)
-	minGUI:add_panel(5, 128, 8, 112, 96)
-	minGUI:add_panel(6, 8, 120, 112, 96)
+	minGUI:add_panel(5, 8, 112, 112, 96)
+	minGUI:add_panel(6, 8, 216, 112, 96)
 	
 	-- add canvas gadgets for tilemap and tileset
 	minGUI:add_canvas(1, 8, 8, 1024, 512, nil, 2)
