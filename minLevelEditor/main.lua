@@ -149,22 +149,22 @@ function love.update(dt)
 	-- get tile size
 	if minGUI:get_gadget_state(4) == true then
 		if tileSize == 32 then
+			tileSize = 16
+
 			minGUI:clear_canvas(1, 0, 0, 0, 1)
 			minGUI:clear_canvas(2, 0, 0, 0, 1)
 			
-			tileSize = 16
-
 			redraw_tileset()
 			redraw_tileset_grid()
 			redraw_map()
-			redraw_tilemap_grid()
+			redraw_tilemap_grid()			
 		end
-	else
-		if tileSize == 16 then
+	elseif minGUI:get_gadget_state(5) == true then
+		if tileSize == 16 then			
+			tileSize = 32
+			
 			minGUI:clear_canvas(1, 0, 0, 0, 1)
 			minGUI:clear_canvas(2, 0, 0, 0, 1)
-			
-			tileSize = 32
 			
 			redraw_tileset()
 			redraw_tileset_grid()
@@ -349,6 +349,7 @@ function redraw_map()
 	end
 end
 
+-- redraw the tileset
 function redraw_tileset()
 	if tileset ~= nil then
 		minGUI:clear_canvas(2, 0, 0, 0, 1)
@@ -359,6 +360,7 @@ function redraw_tileset()
 	end
 end
 		
+-- draw and drop
 function love.filedropped(file)
 	filename = file:getFilename()
 	ext = filename:match("%.%w+$")
@@ -381,6 +383,7 @@ function love.filedropped(file)
 	end
 end
 
+-- load a tileset function
 function load_tileset()
 	-- does the file exists ?
 	if minGUI_get_file_exists(minGUI:get_gadget_text(7)) == true then
