@@ -12,6 +12,7 @@ require "minGUI.minGUI"
 function love.load()
 	MAX_MAP_SIZE = 128
 	DEFAULT_MAP_SIZE = 64
+	MAX_TILESET_SIZE = 64
 	
 	BLACK = {r = 0, g = 0, b = 0, a = 1}
 	GREY = {r = 0.5, g = 0.5, b = 0.5, a = 1}
@@ -38,11 +39,22 @@ function love.load()
 	-- create quads array
 	quad = {}
 	
-	for x = 0, 15 do
+	for x = 0, MAX_TILESET_SIZE - 1 do
 		quad[x] = {}
 		
-		for y = 0, 15 do
+		for y = 0, MAX_TILESET_SIZE - 1 do
 			quad[x][y] = nil
+		end
+	end
+
+	-- create walls map
+	wallMap = {}
+	
+	for x = 0, MAX_TILESET_SIZE - 1 do
+		wallMap[x] = {}
+		
+		for y = 0, MAX_TILESET_SIZE - 1 do
+			wallMap[x][y] = false
 		end
 	end
 			
@@ -97,11 +109,16 @@ function love.load()
 	minGUI:add_checkbox(10, 8, 524, 100, 25, "Zoom x 2", 3)
 
 	-- button to copy the map to clipboard
-	minGUI:add_button(11, 420, 524, 200, 25, "Copy map to clipboard", 2)
+	minGUI:add_button(11, 420, 524, 160, 25, "Copy map to clipboard", 2)
 
 	minGUI:add_label(12, 8, 8, 100, 25, "MAP SIZE", MG_ALIGN_CENTER,  6)
 	minGUI:add_spin(13, 8, 37, 100, 25, mapWidth, 1, MAX_MAP_SIZE, 6)
 	minGUI:add_spin(14, 8, 64, 100, 25, mapHeight, 1, MAX_MAP_SIZE, 6)
+
+	minGUI:add_button(15, 320, 524, 100, 25, "Clear the map", 2)
+
+	-- button to copy the collision map to clipboard
+	minGUI:add_button(16, 180, 524, 220, 25, "Copy collision's map to clipboard", 3)
 
 	-- draw grids
 	redraw_tilemap_grid()
@@ -140,7 +157,7 @@ function love.update(dt)
 	if oldmapWidth ~= mapWidth or oldmapHeight ~= mapHeight then
 		minGUI:clear_canvas(1, 0, 0, 0, 1)
 		
-		redraw_map()
+		redraw_tilemap()
 		redraw_tilemap_grid()
 	end
 		
@@ -157,10 +174,13 @@ function love.update(dt)
 			-- clear the map
 			clear_map()
 			
+			-- redraw tileset
 			redraw_tileset()
 			redraw_tileset_grid()
-			redraw_map()
-			redraw_tilemap_grid()			
+			
+			-- redraw tilemap
+			redraw_tilemap()
+			redraw_tilemap_grid()
 		end
 	elseif minGUI:get_gadget_state(5) == true then
 		if tileSize == 16 then			
@@ -172,10 +192,13 @@ function love.update(dt)
 			-- clear the map
 			clear_map()
 
+			-- redraw tileset
 			redraw_tileset()
 			redraw_tileset_grid()
-			redraw_map()
-			redraw_tilemap_grid()			
+			
+			-- redraw tilemap
+			redraw_tilemap()
+			redraw_tilemap_grid()
 		end
 	end
 
@@ -186,14 +209,14 @@ function love.update(dt)
 		if tilemapZoom == 1 then
 			tilemapZoom = 2
 			
-			redraw_map()
+			redraw_tilemap()
 			redraw_tilemap_grid()
 		end
 	else
 		if tilemapZoom == 2 then
 			tilemapZoom = 1			
 			
-			redraw_map()
+			redraw_tilemap()
 			redraw_tilemap_grid()
 		end
 	end
@@ -220,6 +243,9 @@ function love.update(dt)
 
 	-- draw the selected tile
 	if tileset ~= nil then
+		if tilex > (tilesetWidth / tileSize) - 1 then tilex = (tilesetWidth / tileSize) - 1 end
+		if tiley > (tilesetHeight / tileSize) - 1 then tiley = (tilesetHeight / tileSize) - 1 end
+		
 		if (minGUI.timer * 500) % 500 < 250 then
 			minGUI:draw_rectangle_to_canvas(2, "line", tilex * tileSize * tilesetZoom, tiley * tileSize * tilesetZoom, tileSize * tilesetZoom, tileSize * tilesetZoom, { r = 0, g = 0, b = 0, a = 1})
 		else
@@ -233,10 +259,11 @@ function love.update(dt)
 	local eventGadget, eventType = minGUI:get_gadget_events()
 	
 	-- if button 8 has been clicked, load the tileset
-	if eventType == MG_EVENT_MOUSE_CLICK then
+	if eventType == MG_EVENT_LEFT_MOUSE_CLICK then
 		if eventGadget == 8 then
 			load_tileset()
 		elseif eventGadget == 11 then
+			-- export the map
 			export_string = "map = {\r\n"
 
 			for yexport = 0, mapHeight - 1 do
@@ -256,11 +283,56 @@ function love.update(dt)
 			end
 
 			export_string = export_string .. "}"
-			
+
+			love.system.setClipboardText(export_string)
+		elseif eventGadget == 2 then
+			if tileset ~= nil then
+				tilex = math.floor((minGUI.mouse.x - minGUI:get_panel_x(3) - minGUI:get_gadget_x(2)) / (tileSize * tilesetZoom))
+				tiley = math.floor((minGUI.mouse.y - minGUI:get_panel_y(3) - minGUI:get_gadget_y(2)) / (tileSize * tilesetZoom))
+				
+				if tilex > (tilesetWidth / tileSize) - 1 then tilex = (tilesetWidth / tileSize) - 1 end
+				if tiley > (tilesetHeight / tileSize) - 1 then tiley = (tilesetHeight / tileSize) - 1 end
+				
+				tileid = tilex + (tiley * (tilesetWidth / tileSize))
+				
+				redraw_tileset()
+				redraw_tileset_grid()
+			end
+		elseif eventGadget == 15 then
+			minGUI:clear_canvas(1, 0, 0, 0, 1)
+			clear_map()
+			redraw_tilemap()
+			redraw_tilemap_grid()
+		elseif eventGadget == 16 then
+			-- export the map
+			export_string = "collisions_map = {\r\n"
+
+			for yexport = 0, math.floor(tilesetHeight / tileSize) - 1 do
+				for xexport = 0, math.floor(tilesetWidth / tileSize) - 1 do
+					local v = 0
+					
+					if wallMap[xexport][yexport] == true then v = 1 end
+					
+					export_string = export_string .. tostring(v) .. ","
+				end
+
+				-- linefeed
+				export_string = export_string .. "\r\n"
+			end
+
+			-- remove last comma
+			local byteoffset = utf8.offset(export_string, -1)
+
+			if byteoffset then
+				export_string = string.sub(export_string, 1, byteoffset - 1)
+			end
+
+			export_string = export_string .. "}"
+
 			love.system.setClipboardText(export_string)
 		end				
-	-- if the mouse is down on the canvas 1 or 2
-	elseif eventType == MG_EVENT_MOUSE_DOWN then
+	-- if the left mouse is down on the canvas 1
+	elseif eventType == MG_EVENT_LEFT_MOUSE_DOWN then
 		if eventGadget == 1 then
 			if tileset ~= nil then
 				local x2 = math.floor((minGUI.mouse.x - minGUI:get_panel_x(2) - minGUI:get_gadget_x(1)) / (tileSize * tilemapZoom))
@@ -276,22 +348,58 @@ function love.update(dt)
 				
 						minGUI:draw_rectangle_to_canvas(1, "fill", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, BLACK)
 						minGUI:draw_quad_to_canvas(1, tileset, quad[map[x2][y2]], x, y, tilemapZoom, tilemapZoom)
+
+						local ty = math.floor(tileid / (tilesetWidth / tileSize))
+						local tx = tileid - (ty * (tilesetWidth / tileSize))
+						
+						if wallMap[tx][ty] == false then
+							minGUI:draw_rectangle_to_canvas(1, "line", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
+						else
+							minGUI:draw_rectangle_to_canvas(1, "line", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, RED)
+							minGUI:draw_rectangle_to_canvas(1, "line", x + 1, y + 1, (tileSize * tilemapZoom) - 2, (tileSize * tilemapZoom) - 2, RED)
+						end
+					end
+				end
+			end
+		end
+	-- if the right mouse is down on the canvas 1
+	elseif eventType == MG_EVENT_RIGHT_MOUSE_DOWN then
+		if eventGadget == 1 then
+			if tileset ~= nil then
+				local x2 = math.floor((minGUI.mouse.x - minGUI:get_panel_x(2) - minGUI:get_gadget_x(1)) / (tileSize * tilemapZoom))
+				local y2 = math.floor((minGUI.mouse.y - minGUI:get_panel_y(2) - minGUI:get_gadget_y(1)) / (tileSize * tilemapZoom))
+				
+				if x2 < mapWidth then
+					if y2 < mapHeight then
+				
+						local x = x2 * (tileSize * tilemapZoom)
+						local y = y2 * (tileSize * tilemapZoom)
+				
+						map[x2][y2] = 0
+				
+						minGUI:draw_rectangle_to_canvas(1, "fill", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, BLACK)
+						minGUI:draw_quad_to_canvas(1, tileset, quad[map[x2][y2]], x, y, tilemapZoom, tilemapZoom)
 						minGUI:draw_rectangle_to_canvas(1, "line", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
 					end
 				end
 			end
-		elseif eventGadget == 2 then
+		end
+	-- if right mouse click on canvas 2
+	elseif eventType == MG_EVENT_RIGHT_MOUSE_CLICK then
+		if eventGadget == 2 then
 			if tileset ~= nil then
-				tilex = math.floor((minGUI.mouse.x - minGUI:get_panel_x(3) - minGUI:get_gadget_x(2)) / (tileSize * tilesetZoom))
-				tiley = math.floor((minGUI.mouse.y - minGUI:get_panel_y(3) - minGUI:get_gadget_y(2)) / (tileSize * tilesetZoom))
+				local x = math.floor((minGUI.mouse.x - minGUI:get_panel_x(3) - minGUI:get_gadget_x(2)) / (tileSize * tilesetZoom))
+				local y = math.floor((minGUI.mouse.y - minGUI:get_panel_y(3) - minGUI:get_gadget_y(2)) / (tileSize * tilesetZoom))
 				
-				if tilex > (tilesetWidth * tilesetZoom / tileSize) - 1 then tilex = (tilesetWidth * tilesetZoom / tileSize) - 1 end
-				if tiley > (tilesetHeight * tilesetZoom / tileSize) - 1 then tiley = (tilesetHeight * tilesetZoom / tileSize) - 1 end
-				
-				tileid = tilex + (tiley * (tilesetWidth / tileSize))
-				
+				if x > (tilesetWidth * tilesetZoom / tileSize) - 1 then x = (tilesetWidth * tilesetZoom / tileSize) - 1 end
+				if y > (tilesetHeight * tilesetZoom / tileSize) - 1 then y = (tilesetHeight * tilesetZoom / tileSize) - 1 end
+
+				if wallMap[x][y] == false then wallMap[x][y] = true else wallMap[x][y] = false end
+
 				redraw_tileset()
 				redraw_tileset_grid()
+				redraw_tilemap()
+				redraw_tilemap_grid()
 			end
 		end
 	end
@@ -309,28 +417,50 @@ end
 
 -- draw the grid on the first canvas
 function redraw_tilemap_grid()
-	-- draw the grid on first canvas, and the tilemap
-	for y = 0, (mapHeight - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do		
-		for x = 0, (mapWidth - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do			
-			minGUI:draw_rectangle_to_canvas(1, "line", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
+	-- draw the grid on first canvas, on top of the tilemap
+	for y = 0, mapHeight - 1 do
+		for x = 0, mapWidth - 1 do
+			local x2 = x * tileSize * tilemapZoom
+			local y2 = y * tileSize * tilemapZoom
+			
+			if tileset == nil then
+				minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
+			else
+				local t = map[x][y]
+			
+				local ty = math.floor(t / (tilesetWidth / tileSize))
+				local tx = t - (ty * (tilesetWidth / tileSize))
+			
+				if wallMap[tx][ty] == false then
+					minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
+				else
+					minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, RED)
+					minGUI:draw_rectangle_to_canvas(1, "line", x2 + 1, y2 + 1, (tileSize * tilemapZoom) - 2, (tileSize * tilemapZoom) - 2, RED)
+				end
+			end
 		end
 	end
 end
 
 -- draw the grid on the second canvas
 function redraw_tileset_grid()
-	tx = tilesetWidth * tilesetZoom
-	ty = tilesetHeight * tilesetZoom
+	local tx = tilesetWidth
+	local ty = tilesetHeight
 	
-	for y = 0, ty - 1, tileSize * tilesetZoom do
-		for x = 0, tx - 1, tileSize * tilesetZoom do
-			minGUI:draw_rectangle_to_canvas(2, "line", x, y, tileSize * tilesetZoom, tileSize * tilesetZoom, GREY)
+	for y = 0, ty - 1, tileSize do
+		for x = 0, tx - 1, tileSize do
+			if wallMap[math.floor(x / tileSize)][math.floor(y / tileSize)] == false then
+				minGUI:draw_rectangle_to_canvas(2, "line", x * tilesetZoom, y * tilesetZoom, tileSize * tilesetZoom, tileSize * tilesetZoom, GREY)
+			else
+				minGUI:draw_rectangle_to_canvas(2, "line", x * tilesetZoom, y * tilesetZoom, tileSize * tilesetZoom, tileSize * tilesetZoom, RED)
+				minGUI:draw_rectangle_to_canvas(2, "line", (x * tilesetZoom) + 1, (y * tilesetZoom) + 1, (tileSize * tilesetZoom) - 2, (tileSize * tilesetZoom) - 2, RED)
+			end
 		end
 	end
 end
 
 -- redraw the tilemap
-function redraw_map()
+function redraw_tilemap()
 	-- exit function on error
 	if tileset == nil then return end
 
@@ -373,11 +503,11 @@ function love.filedropped(file)
 
 		if success then
 			load_tileset()
-		else 
-			love.window.showMessageBox("error", "File can't be imported !", "error", true)
+		else
+			minGUI:error_message("File can't be imported !")
 		end
 	else
-		love.window.showMessageBox("error", "Must be a png file ! ", "error", true)
+		minGUI:error_message("Must be a png file ! ")
 	end
 end
 
@@ -387,18 +517,32 @@ function load_tileset()
 	if minGUI_get_file_exists(minGUI:get_gadget_text(7)) == true then
 		-- load the tileset
 		tileset = love.graphics.newImage(minGUI:get_gadget_text(7))
-				
-		-- draw it to the canvas
-		redraw_tileset()
-		redraw_tileset_grid()
-
-		-- setup the selected tile
-		tilex = 0
-		tiley = 0
-		tile = tilex + (tiley * (tilesetWidth / tileSize))
 		
-		-- reset quad size
-		requad_all()
+		if tileset:getWidth() > MAX_TILESET_SIZE * 32 or tileset:getWidth() > MAX_TILESET_SIZE * 32 then
+			minGUI:error_message("Tileset is too big !")
+			
+			tileset = nil
+		else				
+			-- draw it to the canvas
+			redraw_tileset()
+			redraw_tileset_grid()
+	
+			-- setup the selected tile
+			tilex = 0
+			tiley = 0
+			tile = tilex + (tiley * (tilesetWidth / tileSize))
+			
+			-- reset quad size
+			requad_all()
+			
+			-- reset walls
+			reset_walls()
+		
+			-- clear the map
+			clear_map()
+			redraw_tilemap()
+			redraw_tilemap_grid()
+		end
 	end
 end
 
@@ -416,6 +560,15 @@ function clear_map()
 	for x = 0, MAX_MAP_SIZE - 1 do
 		for y = 0, MAX_MAP_SIZE - 1 do
 			map[x][y] = 0
+		end
+	end
+end
+
+-- reset walls
+function reset_walls()
+	for x = 0, MAX_TILESET_SIZE - 1 do
+		for y = 0, MAX_TILESET_SIZE - 1 do
+			wallMap[x][y] = false
 		end
 	end
 end

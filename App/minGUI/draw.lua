@@ -2,7 +2,7 @@
 function minGUI_draw_gadget(w, ox, oy)
 	-- draw buttons
 	if w.tp == MG_BUTTON then		
-		if not w.down then
+		if not w.down.left then
 			minGUI_draw_9slice(MG_BUTTON_UP_IMAGE, w.width, w.height, w.canvas)
 		else
 			minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.width, w.height, w.canvas)
@@ -29,7 +29,7 @@ function minGUI_draw_gadget(w, ox, oy)
 		love.graphics.draw(w.canvas, ox + w.x, oy + w.y)
 	-- draw button images
 	elseif w.tp == MG_BUTTON_IMAGE then
-		if not w.down then
+		if not w.down.left then
 			minGUI_draw_9slice(MG_BUTTON_UP_IMAGE, w.width, w.height, w.canvas)
 		else
 			minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.width, w.height, w.canvas)
@@ -39,7 +39,7 @@ function minGUI_draw_gadget(w, ox, oy)
 		love.graphics.setCanvas(w.canvas)
 		
 		-- draw the image
-		if not w.down then
+		if not w.down.left then
 			love.graphics.draw(w.image, 4, 4, 0, (w.width - 8) / w.image:getWidth(), (w.height - 8) / w.image:getHeight())
 		else
 			love.graphics.draw(w.image, 3, 3, 0, (w.width - 6) / w.image:getWidth(), (w.height - 6) / w.image:getHeight())

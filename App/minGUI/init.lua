@@ -40,10 +40,15 @@ function minGUI_init()
 	
 	MG_NOT_EDITABLE = 1
 
-	MG_EVENT_MOUSE_PRESSED = 1
-	MG_EVENT_MOUSE_DOWN = 2
-	MG_EVENT_MOUSE_RELEASED = 3
-	MG_EVENT_MOUSE_CLICK = 3
+	MG_EVENT_LEFT_MOUSE_PRESSED = 1
+	MG_EVENT_LEFT_MOUSE_DOWN = 2
+	MG_EVENT_LEFT_MOUSE_RELEASED = 3
+	MG_EVENT_LEFT_MOUSE_CLICK = 3
+
+	MG_EVENT_RIGHT_MOUSE_PRESSED = 4
+	MG_EVENT_RIGHT_MOUSE_DOWN = 5
+	MG_EVENT_RIGHT_MOUSE_RELEASED = 6
+	MG_EVENT_RIGHT_MOUSE_CLICK = 6
 	
 	MG_EVENT_TIMER_TICK = 1
 	
@@ -67,6 +72,14 @@ function minGUI_init()
 		--
 		-- methods ==============================
 		--
+		-- show a message
+		info_message = function(self, message)
+			love.window.showMessageBox("info", message, "info", true)
+		end,
+		-- show error
+		error_message = function(self, message)
+			love.window.showMessageBox("error", message, "error", true)
+		end,
 		-- start a timer, with a delay in milliseconds
 		start_timer = function(self, num, delay)
 			-- don't execute next instructions in case of exit process is true
@@ -744,7 +757,7 @@ function minGUI_init()
 				if parent == nil or minGUI.ptree[parent] ~= nil then
 					if width > 0 and height > 0 then
 						minGUI.gtree[num] = {
-							num = num, tp = MG_BUTTON, x = x, y = y, width = width, height = height, text = text, parent = parent, down = false,
+							num = num, tp = MG_BUTTON, x = x, y = y, width = width, height = height, text = text, parent = parent, down = {left = false, right = false},
 							r = 0, g = 0, b = 0, a = 1,
 							canvas = love.graphics.newCanvas(width, height)
 						}
@@ -773,7 +786,7 @@ function minGUI_init()
 				if parent == nil or minGUI.ptree[parent] ~= nil then
 					if width > 0 and height > 0 then
 						minGUI.gtree[num] = {
-							num = num, tp = MG_BUTTON_IMAGE, x = x, y = y, width = width, height = height, text = text, parent = parent, down = false,
+							num = num, tp = MG_BUTTON_IMAGE, x = x, y = y, width = width, height = height, text = text, parent = parent, down =  {left = false, right = false},
 							image = image,
 							canvas = love.graphics.newCanvas(width, height)
 						}
@@ -913,7 +926,7 @@ function minGUI_init()
 				if parent == nil or minGUI.ptree[parent] ~= nil then
 					if width > 0 and height > 0 then
 						minGUI.gtree[num] = {
-							num = num, tp = MG_CANVAS, x = x, y = y, width = width, height = height, flags = flags, parent = parent, down = false,
+							num = num, tp = MG_CANVAS, x = x, y = y, width = width, height = height, flags = flags, parent = parent, down = {left = false, right = false},
 							canvas = love.graphics.newCanvas(width, height)
 						}
 					end
@@ -1028,7 +1041,7 @@ function minGUI_init()
 					if width > 0 and height > 0 then
 						minGUI.gtree[num] = {
 							num = num, tp = MG_SPIN, x = x, y = y, width = width, height = height, parent = parent,
-							down = false, btnUp = false, btnDown = false,
+							down = {left = false, right = false}, btnUp = false, btnDown = false,
 							text = tostring(value), minValue = minValue, maxValue = maxValue, timer = 0,
 							rpaper = 1, gpaper = 1, bpaper = 1, apaper = 1,
 							rpen = 0, gpen = 0, bpen = 0, apen = 1,
