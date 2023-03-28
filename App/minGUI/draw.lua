@@ -302,6 +302,15 @@ function minGUI_draw_all()
 								else
 									minGUI_hide_text_cursor(w, v.x, v.y)
 								end
+							-- if the focused gadget is an editor gadget...
+							elseif w.tp == MG_EDITOR then
+								local t = math.floor(minGUI.timer * 1000) % 1000
+						
+								if t < 500 then
+									minGUI_draw_editor_cursor(w, v.x, v.y)
+								else
+									minGUI_hide_editor_cursor(w, v.x, v.y)
+								end
 							end
 						end
 					end
@@ -337,6 +346,15 @@ function minGUI_draw_all()
 							minGUI_draw_text_cursor(w, 0, 0)
 						else
 							minGUI_hide_text_cursor(w, 0, 0)
+						end
+					-- if the focused gadget is an editor gadget...
+					elseif w.tp == MG_EDITOR then
+						local t = math.floor(minGUI.timer * 1000) % 1000
+						
+						if t < 500 then
+							minGUI_draw_editor_cursor(w, 0, 0)
+						else
+							minGUI_hide_editor_cursor(w, 0, 0)
 						end
 					end
 				end
@@ -378,6 +396,62 @@ function minGUI_hide_text_cursor(w, ox, oy)
 		yc = oy + w.y + ((w.height - 2) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
 	end
 	
+	love.graphics.setColor(w.rpaper, w.gpaper, w.bpaper, w.apaper)
+	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- draw the editor cursor
+function minGUI_draw_editor_cursor(w, ox, oy)
+	local xc = ox + w.x + 2
+	local yc = oy + w.y + 2
+
+	-- explode utf8 text
+	t = {}
+
+	t = minGUI_explode(w.text, "\n")
+	
+	--search for cursor y position
+	for y = 0, w.cursory - 1 do
+		yc = yc + minGUI.font[minGUI.numFont]:getHeight(t[y + 1])
+	end
+	
+	--search for cursor x position
+	if w.cursory == #t then
+		-- don't move xc if at last line...
+	else
+		for x = 0, w.cursorx - 1 do
+			local c = string.sub(t[w.cursory + 1], x + 1, x + 1)
+			
+			xc = xc + minGUI.font[minGUI.numFont]:getWidth(c)
+		end
+	end
+	
+	love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
+	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
+	love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- hide the editor cursor
+function minGUI_hide_editor_cursor(w, ox, oy)
+	local xc = ox + w.x + 2
+	local yc = oy + w.y + 2
+	local t = {}
+	
+	-- separate sentences
+	for str in string.gmatch(w.text, "\n") do
+		table.insert(t, str)
+	end
+	
+	--search for cursor position
+	for y = 1, w.cursory do
+		--yc = yc + minGUI.font[minGUI.numFont]:getHeight(t[y - 1])
+	end
+		
+	for x = 1, w.cursorx do
+		---xc = xc + minGUI.font[minGUI.numFont]:getWidth(t[x - 1])
+	end
+		
 	love.graphics.setColor(w.rpaper, w.gpaper, w.bpaper, w.apaper)
 	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
 	love.graphics.setColor(1, 1, 1, 1)
