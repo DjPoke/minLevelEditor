@@ -123,6 +123,9 @@ function love.load()
 	-- draw grids
 	redraw_tilemap_grid()
 	redraw_tileset_grid()
+	
+	-- reset default focuset gadget
+	minGUI:set_focus(nil)
 end
 
 -- default love.textinput function

@@ -156,6 +156,12 @@ function minGUI_init()
 				return eventTimer, eventType
 			end
 		end,
+		set_focus = function(self, num)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+			
+			minGUI.gfocus = num
+		end,
 		set_gadget_text = function(self, num, text)
 			-- don't execute next instructions in case of exit process is true
 			if minGUI.exitProcess == true then return end
