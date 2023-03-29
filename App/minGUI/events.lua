@@ -887,6 +887,17 @@ function minGUI_update_events(dt)
 							end
 						end
 					end
+					
+					-- if home key is pressed now...
+					if love.keyboard.isDown("home") == true then
+						minGUI.gtree[minGUI.gfocus].cursorx = 0
+						minGUI.gtree[minGUI.gfocus].cursory = 0
+					end
+
+					-- if end key is pressed now...
+					if love.keyboard.isDown("end") == true then
+						minGUI:set_cursor_xy(minGUI.gfocus, -1, -1)
+					end
 
 					-- if backspace has not yet been pressed...
 					if minGUI.gtree[minGUI.gfocus].backspace == 0 then
