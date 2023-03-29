@@ -101,8 +101,10 @@ function minGUI_draw_gadget(w, ox, oy)
 
 		-- print the text
 		if w.text ~= "" then
-			text = minGUI_sub_string(w.text, w.offset + 1)
-			love.graphics.print(text, 0, ((w.height - 4 - minGUI.font[minGUI.numFont]:getHeight(text)) / 2) - 1)
+			local text = minGUI_sub_string(w.text, w.offset + 1)
+			local y = ((w.height - 4 - minGUI.font[minGUI.numFont]:getHeight(text)) / 2) - 1
+
+			love.graphics.print(text, 0, y)
 		end
 								
 		-- restore drawing on the window's canvas
@@ -421,7 +423,7 @@ function minGUI_draw_editor_cursor(w, ox, oy)
 		-- don't move xc if at last line...
 	else
 		for x = 0, w.cursorx - 1 do
-			local c = string.sub(t[w.cursory + 1], x + 1, x + 1)
+			local c = minGUI_sub_string(t[w.cursory + 1], x + 1, x + 1)
 			
 			xc = xc + minGUI.font[minGUI.numFont]:getWidth(c)
 		end
@@ -452,7 +454,7 @@ function minGUI_hide_editor_cursor(w, ox, oy)
 		-- don't move xc if at last line...
 	else
 		for x = 0, w.cursorx - 1 do
-			local c = string.sub(t[w.cursory + 1], x + 1, x + 1)
+			local c = minGUI_sub_string(t[w.cursory + 1], x + 1, x + 1)
 			
 			xc = xc + minGUI.font[minGUI.numFont]:getWidth(c)
 		end

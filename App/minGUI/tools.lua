@@ -28,7 +28,7 @@ function minGUI_shift_text(num, text)
 	minGUI.gtree[num].offset = 0
 
 	while minGUI.font[minGUI.numFont]:getWidth(text) >= minGUI.gtree[num].width - 6 do
-		-- get the first letter's size, in pixels
+		-- remove 1st utf8 character
 		text = minGUI_sub_string(text, 2)
 						
 		-- shift the text left of one character
@@ -38,17 +38,17 @@ end
 
 -- utf8 string.sub
 function minGUI_sub_string(text, v1, v2)
+	if text == nil or text == "" then return "" end
 	if v1 == nil then v1 = 1 end
-	if v2 == nil then v2 = -1 end
+	if v2 == nil then v2 = utf8.len(text) end
 	
-	-- get the byte offset to the last UTF-8 character in the string.
+	-- left utf8 char byte offset
 	local byteoffset1 = utf8.offset(text, v1)
 
-	-- get the byte offset to the last UTF-8 character in the string.
-	local byteoffset2 = utf8.offset(text, v2)
+	-- right utf8 char byte offset
+	local byteoffset2 = utf8.offset(text, v2 + 1) - 1
 
-	-- string.sub operates on bytes rather than UTF-8 characters, so we couldn't do string.sub(text, 1, -2).
-    return string.sub(text, byteoffset1, byteoffset2)
+	return string.sub(text, byteoffset1, byteoffset2)
 end
 
 -- uncheck all option gadgets of the same parent
@@ -141,7 +141,7 @@ function minGUI_explode(str, div)
             break
         end
 		
-        o[#o + 1], str = str:sub(1, pos1 - 1),str:sub(pos2 + 1)
+        o[#o + 1], str = str:sub(1, pos1 - 1), str:sub(pos2 + 1)
     end
 	
     return o

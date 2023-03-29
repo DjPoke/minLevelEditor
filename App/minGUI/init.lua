@@ -745,12 +745,10 @@ function minGUI_init()
 				minGUI.gtree[num].position = 0
 			
 				for i = 0, minGUI.gtree[num].cursory - 1 do
-					minGUI.gtree[num].position = minGUI.gtree[num].position + string.len(t[i + 1])
+					minGUI.gtree[num].position = minGUI.gtree[num].position + utf8.len(t[i + 1])
 				end
 			
-				for i = 0, minGUI.gtree[num].cursorx - 1 do
-					minGUI.gtree[num].position = minGUI.gtree[num].position + 1
-				end
+				minGUI.gtree[num].position = minGUI.gtree[num].position + minGUI.gtree[num].cursorx
 			end
 		end,
 		set_cursor_xy = function(self, num, x, y)
@@ -779,16 +777,17 @@ function minGUI_init()
 	
 				t = minGUI_explode(minGUI.gtree[num].text, "\n")
 				
-				-- corrections
-				if minGUI.gtree[num].cursory == -1 then
+				-- correction of y
+				if y == -1 then
 					minGUI.gtree[num].cursory = #t
 				end			
-	
-				if minGUI.gtree[num].cursorx == -1 then
-					if t[y] == nil then
+
+				-- correction of x
+				if x == -1 then
+					if t[y + 1] == nil then
 						minGUI.gtree[num].cursorx = 0
 					else
-						minGUI.gtree[num].cursorx = string.len(t[y])
+						minGUI.gtree[num].cursorx = utf8.len(t[y + 1])
 					end
 				end
 			

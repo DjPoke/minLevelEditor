@@ -824,6 +824,10 @@ function minGUI_update_events(dt)
 					local move_down = function(self)
 						if minGUI.gtree[minGUI.gfocus].cursory < #t then
 							minGUI.gtree[minGUI.gfocus].cursory = minGUI.gtree[minGUI.gfocus].cursory + 1
+							
+							if minGUI.gtree[minGUI.gfocus].cursory == #t then
+								minGUI.gtree[minGUI.gfocus].cursorx = 0
+							end
 						else
 							minGUI.gtree[minGUI.gfocus].cursorx = 0
 						end
@@ -837,7 +841,7 @@ function minGUI_update_events(dt)
 							minGUI.gtree[minGUI.gfocus].cursory = minGUI.gtree[minGUI.gfocus].cursory - 1
 							
 							if minGUI.gtree[minGUI.gfocus].cursory >= 0 then
-								minGUI.gtree[minGUI.gfocus].cursorx = string.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1])
+								minGUI.gtree[minGUI.gfocus].cursorx = utf8.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1])
 							else
 								minGUI.gtree[minGUI.gfocus].cursorx = 0
 								minGUI.gtree[minGUI.gfocus].cursory = 0
@@ -850,7 +854,7 @@ function minGUI_update_events(dt)
 						if minGUI.gtree[minGUI.gfocus].cursory < #t then
 							minGUI.gtree[minGUI.gfocus].cursorx = minGUI.gtree[minGUI.gfocus].cursorx + 1
 
-							if minGUI.gtree[minGUI.gfocus].cursorx > string.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1]) then
+							if minGUI.gtree[minGUI.gfocus].cursorx > utf8.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1]) then
 								minGUI.gtree[minGUI.gfocus].cursorx = 0
 								minGUI.gtree[minGUI.gfocus].cursory = minGUI.gtree[minGUI.gfocus].cursory + 1
 								
@@ -864,19 +868,19 @@ function minGUI_update_events(dt)
 					-- remove character at left from cursor
 					local remove_left_char = function(self)
 						if minGUI.gtree[minGUI.gfocus].cursory == #t then
-							t[minGUI.gtree[minGUI.gfocus].cursory] = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory], 1, -2)
+							t[minGUI.gtree[minGUI.gfocus].cursory] = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory], 1, -2)
 							minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
 							
 							move_left()
 						elseif minGUI.gtree[minGUI.gfocus].cursorx > 0 or minGUI.gtree[minGUI.gfocus].cursory > 0 then
 							if minGUI.gtree[minGUI.gfocus].cursorx == 0 then
-								t[minGUI.gtree[minGUI.gfocus].cursory] = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory], 1, -2)
+								t[minGUI.gtree[minGUI.gfocus].cursory] = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory], 1, -2)
 								minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
 
 								move_left()
 							else
-								local lt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx - 1)
-								local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+								local lt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx - 1)
+								local rt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
 
 								t[minGUI.gtree[minGUI.gfocus].cursory + 1] = lt .. rt
 
@@ -891,9 +895,9 @@ function minGUI_update_events(dt)
 					local remove_right_char = function(self)
 						if minGUI.gtree[minGUI.gfocus].cursory < #t then
 							if t[minGUI.gtree[minGUI.gfocus].cursory + 1] ~= "" then
-								if minGUI.gtree[minGUI.gfocus].cursorx < string.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1]) then
-									local lt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
-									local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 2)
+								if minGUI.gtree[minGUI.gfocus].cursorx < utf8.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1]) then
+									local lt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
+									local rt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 2)
 	
 									t[minGUI.gtree[minGUI.gfocus].cursory + 1] = lt .. rt
 	
@@ -906,6 +910,16 @@ function minGUI_update_events(dt)
 								end
 							end
 						end
+					end
+					
+					-- if home key is pressed now...
+					if love.keyboard.isDown("home") == true then
+						minGUI.gtree[minGUI.gfocus].cursorx = 0
+					end
+
+					-- if end key is pressed now...
+					if love.keyboard.isDown("end") == true then
+						minGUI:set_cursor_xy(minGUI.gfocus, -1, minGUI.gtree[minGUI.gfocus].cursory)
 					end
 					
 					-- pressed return ?
@@ -942,16 +956,6 @@ function minGUI_update_events(dt)
 						end
 					end
 					
-					-- if home key is pressed now...
-					if love.keyboard.isDown("home") == true then
-						minGUI.gtree[minGUI.gfocus].cursorx = 0
-					end
-
-					-- if end key is pressed now...
-					if love.keyboard.isDown("end") == true then
-						minGUI:set_cursor_xy(minGUI.gfocus, -1, minGUI.gtree[minGUI.gfocus].cursory)
-					end
-
 					-- if backspace has not yet been pressed...
 					if minGUI.gtree[minGUI.gfocus].backspace == 0 then
 						-- if backspace is pressed now...
@@ -1271,7 +1275,7 @@ function minGUI_textinput(c)
 				if minGUI.gtree[minGUI.gfocus].editable == true then
 					-- add last character to the text
 					minGUI.gtree[minGUI.gfocus].text = minGUI.gtree[minGUI.gfocus].text .. c
-					
+
 					-- calculate the new offset value for the text
 					minGUI_shift_text(minGUI.gfocus, minGUI.gtree[minGUI.gfocus].text)
 				end
@@ -1297,14 +1301,14 @@ function minGUI_textinput(c)
 						minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
 						minGUI.gtree[minGUI.gfocus].cursorx = minGUI.gtree[minGUI.gfocus].cursorx + 1
 					elseif minGUI.gtree[minGUI.gfocus].cursorx == 0 then
-						local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+						local rt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
 					
 						t[minGUI.gtree[minGUI.gfocus].cursory + 1] = c .. rt
 						minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
 						minGUI.gtree[minGUI.gfocus].cursorx = minGUI.gtree[minGUI.gfocus].cursorx + 1
 					else
-						local lt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
-						local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+						local lt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
+						local rt = minGUI_sub_string(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
 					
 						t[minGUI.gtree[minGUI.gfocus].cursory + 1] = lt .. c .. rt
 						minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
