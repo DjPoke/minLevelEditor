@@ -858,12 +858,11 @@ function minGUI_update_events(dt)
 									minGUI.gtree[minGUI.gfocus].cursory = #t
 								end
 							end
-						end
-							
+						end							
 					end
 
-					-- remove character at cursor
-					local remove_char = function(self)
+					-- remove character at left from cursor
+					local remove_left_char = function(self)
 						if minGUI.gtree[minGUI.gfocus].cursory == #t then
 							t[minGUI.gtree[minGUI.gfocus].cursory] = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory], 1, -2)
 							minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
@@ -887,16 +886,70 @@ function minGUI_update_events(dt)
 							end
 						end
 					end
+
+					-- remove character at right from cursor
+					local remove_right_char = function(self)
+						if minGUI.gtree[minGUI.gfocus].cursory < #t then
+							if t[minGUI.gtree[minGUI.gfocus].cursory + 1] ~= "" then
+								if minGUI.gtree[minGUI.gfocus].cursorx < string.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1]) then
+									local lt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
+									local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 2)
+	
+									t[minGUI.gtree[minGUI.gfocus].cursory + 1] = lt .. rt
+	
+									minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+								else
+									t[minGUI.gtree[minGUI.gfocus].cursory + 1] = t[minGUI.gtree[minGUI.gfocus].cursory + 1] .. t[minGUI.gtree[minGUI.gfocus].cursory + 2]
+									t[minGUI.gtree[minGUI.gfocus].cursory + 2] = ""
+	
+									minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+								end
+							end
+						end
+					end
+					
+					-- pressed return ?
+					local ret = function(self)
+						if minGUI.gtree[minGUI.gfocus].cursorx == 0 then
+							table.insert(t, minGUI.gtree[minGUI.gfocus].cursory + 1, "")
+							
+							minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+							
+							move_down()
+						elseif minGUI.gtree[minGUI.gfocus].cursorx < string.len(t[minGUI.gtree[minGUI.gfocus].cursory + 1]) then
+							local lt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
+							local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+							
+							t[minGUI.gtree[minGUI.gfocus].cursory + 1] = lt
+							
+							table.insert(t, minGUI.gtree[minGUI.gfocus].cursory + 2, rt)
+							
+							minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+							
+							move_down()
+							
+							minGUI.gtree[minGUI.gfocus].cursorx = 0
+						else
+							local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+							
+							table.insert(t, minGUI.gtree[minGUI.gfocus].cursory + 2, rt)
+							
+							minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+							
+							move_down()
+							
+							minGUI.gtree[minGUI.gfocus].cursorx = 0
+						end
+					end
 					
 					-- if home key is pressed now...
 					if love.keyboard.isDown("home") == true then
 						minGUI.gtree[minGUI.gfocus].cursorx = 0
-						minGUI.gtree[minGUI.gfocus].cursory = 0
 					end
 
 					-- if end key is pressed now...
 					if love.keyboard.isDown("end") == true then
-						minGUI:set_cursor_xy(minGUI.gfocus, -1, -1)
+						minGUI:set_cursor_xy(minGUI.gfocus, -1, minGUI.gtree[minGUI.gfocus].cursory)
 					end
 
 					-- if backspace has not yet been pressed...
@@ -904,7 +957,7 @@ function minGUI_update_events(dt)
 						-- if backspace is pressed now...
 						if love.keyboard.isDown("backspace") == true then
 							-- remove character at cursor
-							remove_char()
+							remove_left_char()
 
 							-- count the first backspace, and get the timer
 							minGUI.gtree[minGUI.gfocus].backspace = 1
@@ -921,7 +974,7 @@ function minGUI_update_events(dt)
 								-- wait for keyboard slow delay
 								if minGUI.timer - minGUI.kbdelay >= MG_SLOW_DELAY then
 									-- remove character at cursor
-									remove_char()
+									remove_left_char()
 
 									-- reset kbdelay and increment backspace
 									minGUI.kbdelay = minGUI.timer
@@ -932,11 +985,54 @@ function minGUI_update_events(dt)
 								-- wait for keyboard quick delay
 								if minGUI.timer - minGUI.kbdelay >= MG_QUICK_DELAY then
 									-- remove character at cursor
-									remove_char()
+									remove_left_char()
 									
 									-- reset kbdelay and increment backspace
 									minGUI.kbdelay = minGUI.timer
 									minGUI.gtree[minGUI.gfocus].backspace = minGUI.gtree[minGUI.gfocus].backspace + 1
+								end
+							end
+						end
+					end
+															
+					-- if delete key has not yet been pressed...
+					if minGUI.gtree[minGUI.gfocus].delete == 0 then
+						-- if delete key is pressed now...
+						if love.keyboard.isDown("delete") == true then
+							-- remove character at cursor
+							remove_right_char()
+
+							-- count the first delete key, and get the timer
+							minGUI.gtree[minGUI.gfocus].delete = 1
+							minGUI.kbdelay = minGUI.timer
+						end
+					-- if delete key has been pressed...
+					elseif minGUI.gtree[minGUI.gfocus].delete > 0 then
+						-- if delete key is released now...
+						if love.keyboard.isDown("delete") == false then
+							minGUI.gtree[minGUI.gfocus].delete = 0
+						else
+							-- if delete key is still pressed, and has been pressed only one time
+							if minGUI.gtree[minGUI.gfocus].delete == 1 then
+								-- wait for keyboard slow delay
+								if minGUI.timer - minGUI.kbdelay >= MG_SLOW_DELAY then
+									-- remove character at cursor
+									remove_right_char()
+
+									-- reset kbdelay and increment delete key
+									minGUI.kbdelay = minGUI.timer
+									minGUI.gtree[minGUI.gfocus].delete = minGUI.gtree[minGUI.gfocus].delete + 1
+								end
+							-- if delete key is still pressed, and has been pressed for multiple times
+							elseif minGUI.gtree[minGUI.gfocus].delete > 1 then
+								-- wait for keyboard quick delay
+								if minGUI.timer - minGUI.kbdelay >= MG_QUICK_DELAY then
+									-- remove character at cursor
+									remove_right_char()
+									
+									-- reset kbdelay and increment delete key
+									minGUI.kbdelay = minGUI.timer
+									minGUI.gtree[minGUI.gfocus].delete = minGUI.gtree[minGUI.gfocus].delete + 1
 								end
 							end
 						end
@@ -1113,6 +1209,49 @@ function minGUI_update_events(dt)
 							end
 						end
 					end
+					
+					-- if return arrow key has not yet been pressed...
+					if minGUI.gtree[minGUI.gfocus].ret == 0 then
+						-- if ret arrow is pressed now...
+						if love.keyboard.isDown("return") == true then
+							-- move ret
+							ret()
+							
+							-- count the first ret key, and get the timer
+							minGUI.gtree[minGUI.gfocus].ret = 1
+							minGUI.kbdelay = minGUI.timer
+						end
+					-- if ret key has been pressed...
+					elseif minGUI.gtree[minGUI.gfocus].ret > 0 then
+						-- if ret key is released now...
+						if love.keyboard.isDown("return") == false then
+							minGUI.gtree[minGUI.gfocus].ret = 0
+						else
+							-- if ret key is still pressed, and has been pressed only one time
+							if minGUI.gtree[minGUI.gfocus].ret == 1 then
+								-- wait for keyboard slow delay
+								if minGUI.timer - minGUI.kbdelay >= MG_SLOW_DELAY then
+									-- move ret
+									ret()
+
+									-- reset kbdelay and increment ret key
+									minGUI.kbdelay = minGUI.timer
+									minGUI.gtree[minGUI.gfocus].ret = minGUI.gtree[minGUI.gfocus].ret + 1
+								end
+							-- if ret key is still pressed, and has been pressed for multiple times
+							elseif minGUI.gtree[minGUI.gfocus].ret > 1 then
+								-- wait for keyboard quick delay
+								if minGUI.timer - minGUI.kbdelay >= MG_QUICK_DELAY then
+									-- move ret
+									ret()
+									
+									-- reset kbdelay and increment ret key
+									minGUI.kbdelay = minGUI.timer
+									minGUI.gtree[minGUI.gfocus].ret = minGUI.gtree[minGUI.gfocus].ret + 1
+								end
+							end
+						end
+					end					
 				end
 			end
 		end
@@ -1121,7 +1260,7 @@ end
 
 -- function to input text, and
 -- write it  in a gadget
-function minGUI_textinput(t)
+function minGUI_textinput(c)
 	-- if a gadget has the focus...
 	if minGUI.gfocus ~= nil then
 		-- if the gadget exists
@@ -1131,15 +1270,15 @@ function minGUI_textinput(t)
 				-- if the gadget is editable...
 				if minGUI.gtree[minGUI.gfocus].editable == true then
 					-- add last character to the text
-					minGUI.gtree[minGUI.gfocus].text = minGUI.gtree[minGUI.gfocus].text .. t
+					minGUI.gtree[minGUI.gfocus].text = minGUI.gtree[minGUI.gfocus].text .. c
 					
 					-- calculate the new offset value for the text
 					minGUI_shift_text(minGUI.gfocus, minGUI.gtree[minGUI.gfocus].text)
 				end
 			elseif minGUI.gtree[minGUI.gfocus].tp == MG_SPIN then
-				if t >= "0" and t <= "9" then
+				if c >= "0" and c <= "9" then
 					-- add last character to the text
-					minGUI.gtree[minGUI.gfocus].text = frameTextValue(minGUI.gtree[minGUI.gfocus].text .. t, minGUI.gtree[minGUI.gfocus].minValue, minGUI.gtree[minGUI.gfocus].maxValue)
+					minGUI.gtree[minGUI.gfocus].text = frameTextValue(minGUI.gtree[minGUI.gfocus].text .. c, minGUI.gtree[minGUI.gfocus].minValue, minGUI.gtree[minGUI.gfocus].maxValue)
 						
 					-- calculate the new offset value for the text
 					minGUI_shift_text(minGUI.gfocus, minGUI.gtree[minGUI.gfocus].text)
@@ -1147,8 +1286,30 @@ function minGUI_textinput(t)
 			elseif minGUI.gtree[minGUI.gfocus].tp == MG_EDITOR then
 				-- if the gadget is editable...
 				if minGUI.gtree[minGUI.gfocus].editable == true then
-					-- add last character to the text
-					minGUI.gtree[minGUI.gfocus].text = minGUI.gtree[minGUI.gfocus].text .. t
+					-- explode text
+					local t = {}
+					
+					t = minGUI_explode(minGUI.gtree[minGUI.gfocus].text, "\n")
+
+					-- add the character to the text
+					if minGUI.gtree[minGUI.gfocus].cursory == #t then
+						t[minGUI.gtree[minGUI.gfocus].cursory + 1] = c
+						minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+						minGUI.gtree[minGUI.gfocus].cursorx = minGUI.gtree[minGUI.gfocus].cursorx + 1
+					elseif minGUI.gtree[minGUI.gfocus].cursorx == 0 then
+						local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+					
+						t[minGUI.gtree[minGUI.gfocus].cursory + 1] = c .. rt
+						minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+						minGUI.gtree[minGUI.gfocus].cursorx = minGUI.gtree[minGUI.gfocus].cursorx + 1
+					else
+						local lt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], 1, minGUI.gtree[minGUI.gfocus].cursorx)
+						local rt = string.sub(t[minGUI.gtree[minGUI.gfocus].cursory + 1], minGUI.gtree[minGUI.gfocus].cursorx + 1)
+					
+						t[minGUI.gtree[minGUI.gfocus].cursory + 1] = lt .. c .. rt
+						minGUI.gtree[minGUI.gfocus].text = minGUI_assemble(t, "\n")
+						minGUI.gtree[minGUI.gfocus].cursorx = minGUI.gtree[minGUI.gfocus].cursorx + 1
+					end
 				end
 			end
 		end

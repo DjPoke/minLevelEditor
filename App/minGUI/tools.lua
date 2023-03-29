@@ -154,9 +154,11 @@ function minGUI_assemble(t, div)
 	
 	local s = ""
 	
-	for i = 1, #t do
-		if t[i] ~= "" then s = s .. t[i] .. div end
+	for i = 1, #t - 1 do
+		s = s .. t[i] .. div
 	end
+
+	s = s .. t[#t]
 	
 	return s
 end

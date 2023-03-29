@@ -436,20 +436,26 @@ end
 function minGUI_hide_editor_cursor(w, ox, oy)
 	local xc = ox + w.x + 2
 	local yc = oy + w.y + 2
-	local t = {}
+
+	-- explode utf8 text
+	t = {}
+
+	t = minGUI_explode(w.text, "\n")
 	
-	-- separate sentences
-	for str in string.gmatch(w.text, "\n") do
-		table.insert(t, str)
+	--search for cursor y position
+	for y = 0, w.cursory - 1 do
+		yc = yc + minGUI.font[minGUI.numFont]:getHeight(t[y + 1])
 	end
 	
-	--search for cursor position
-	for y = 1, w.cursory do
-		--yc = yc + minGUI.font[minGUI.numFont]:getHeight(t[y - 1])
-	end
-		
-	for x = 1, w.cursorx do
-		---xc = xc + minGUI.font[minGUI.numFont]:getWidth(t[x - 1])
+	--search for cursor x position
+	if w.cursory == #t then
+		-- don't move xc if at last line...
+	else
+		for x = 0, w.cursorx - 1 do
+			local c = string.sub(t[w.cursory + 1], x + 1, x + 1)
+			
+			xc = xc + minGUI.font[minGUI.numFont]:getWidth(c)
+		end
 	end
 		
 	love.graphics.setColor(w.rpaper, w.gpaper, w.bpaper, w.apaper)

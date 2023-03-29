@@ -1180,7 +1180,7 @@ function minGUI_init()
 							rpapergreyed = 0.75, gpapergreyed = 0.75, bpapergreyed = 0.75, apapergreyed = 1,
 							rpen = 0, gpen = 0, bpen = 0, apen = 1,
 							editable = true, cursorx = 0, cursory = 0, position = 0,
-							backspace = 0, delete = 0, up = 0, down = 0, left = 0, right = 0,
+							backspace = 0, delete = 0, up = 0, down = 0, left = 0, right = 0, ret = 0,
 							canvas = love.graphics.newCanvas(width - 4, height - 4)
 						}
 						
@@ -1191,6 +1191,9 @@ function minGUI_init()
 						
 						-- set the focus to the last editable gadget
 						minGUI.gfocus = num
+						
+						-- position cursor at end
+						minGUI:set_cursor_xy(num, -1, -1)
 					end
 				end
 			end
