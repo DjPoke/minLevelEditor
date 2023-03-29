@@ -464,11 +464,11 @@ end
 
 -- redraw the tilemap
 function redraw_tilemap()
+	minGUI:clear_canvas(1, 0, 0, 0, 1)
+	
 	-- exit function on error
 	if tileset == nil then return end
 
-	minGUI:clear_canvas(1, 0, 0, 0, 1)
-	
 	-- draw the grid on first canvas, and the tilemap
 	for y = 0, (mapHeight - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do
 		for x = 0, (mapWidth - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do
@@ -482,8 +482,9 @@ end
 
 -- redraw the tileset
 function redraw_tileset()
+	minGUI:clear_canvas(2, 0, 0, 0, 1)
+	
 	if tileset ~= nil then
-		minGUI:clear_canvas(2, 0, 0, 0, 1)
 		minGUI:draw_image_to_canvas(2, tileset, 0, 0, tilesetZoom, tilesetZoom)
 		
 		tilesetWidth = tileset:getWidth()

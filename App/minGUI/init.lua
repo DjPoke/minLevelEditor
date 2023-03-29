@@ -8,13 +8,13 @@ function minGUI_init()
 	MG_BUTTON = 2
 	MG_BUTTON_IMAGE = 3
 	MG_LABEL = 4
-	MG_STRING = 5 -- todo! finish it
+	MG_STRING = 5
 	MG_CANVAS = 6
 	MG_CHECKBOX = 7
 	MG_OPTION = 8
 	MG_SPIN = 9
-	MG_EDITOR = 10 -- todo!
-	MG_SCROLLBAR = 11 -- todo!
+	MG_EDITOR = 10
+	MG_SCROLLBAR = 11
 	
 	MG_PANEL_IMAGE = 1
 	MG_BUTTON_UP_IMAGE = 2
@@ -38,7 +38,9 @@ function minGUI_init()
 	MG_ALIGN_RIGHT = 2
 	MG_ALIGN_CENTER = 3
 	
-	MG_NOT_EDITABLE = 1
+	MG_NOT_EDITABLE = 4
+	
+	MG_SCROLLBAR_VERTICAL = 8
 
 	MG_EVENT_LEFT_MOUSE_PRESSED = 1
 	MG_EVENT_LEFT_MOUSE_DOWN = 2
@@ -51,6 +53,8 @@ function minGUI_init()
 	MG_EVENT_RIGHT_MOUSE_CLICK = 6
 	
 	MG_EVENT_TIMER_TICK = 1
+
+	MIN_SCROLLBAR_BUTTON_SIZE = 8
 	
 	-- init minGUI table
 	minGUI = {
@@ -903,7 +907,7 @@ function minGUI_init()
 				if flags == 0 then flags = MG_ALIGN_LEFT end
 			else
 				minGUI_error_message("Wrong flags for label " .. num)
-				love.event.quit(1)
+				return
 			end
 			
 			-- initialize values
@@ -944,7 +948,7 @@ function minGUI_init()
 				flags = 0
 			elseif type(flags) ~= "number" then
 				minGUI_error_message("Wrong flags for string " .. num)
-				love.event.quit(1)
+				return
 			end
 			
 			-- initialize values
@@ -1000,7 +1004,7 @@ function minGUI_init()
 				flags = 0
 			elseif type(flags) ~= "number" then
 				minGUI_error_message("Wrong flags for canvas " .. num)
-				love.event.quit(1)
+				return
 			end
 			
 			-- initialize values
@@ -1163,7 +1167,7 @@ function minGUI_init()
 				flags = 0
 			elseif type(flags) ~= "number" then
 				minGUI_error_message("Wrong flags for editor " .. num)
-				love.event.quit(1)
+				return
 			end
 			
 			-- initialize values
@@ -1197,6 +1201,100 @@ function minGUI_init()
 					end
 				end
 			end
+		end,
+		-- add a scrollbar gadget to the gadgets's tree
+		add_scrollbar = function(self, num, x, y, width, height, value, minValue, maxValue, stepsValue, flags, parent)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param(num, "number") then minGUI_error_message("Wrong num value for scrollbar"); return end
+			if not minGUI_check_param2(x, "number") then minGUI_error_message("Wrong x for scrollbar " .. num); return end
+			if not minGUI_check_param2(y, "number") then minGUI_error_message("Wrong y for scrollbar " .. num); return end
+			if not minGUI_check_param(width, "number") then minGUI_error_message("Wrong width for scrollbar " .. num); return end
+			if not minGUI_check_param(height, "number") then minGUI_error_message("Wrong height for scrollbar " .. num); return end
+			if not minGUI_check_param2(value, "number") then minGUI_error_message("Wrong value for scrollbar " .. num); return end
+			if not minGUI_check_param2(minValue, "number") then minGUI_error_message("Wrong min value for scrollbar " .. num); return end
+			if not minGUI_check_param2(maxValue, "number") then minGUI_error_message("Wrong max value for scrollbar " .. num); return end
+			if not minGUI_check_param2(stepsValue, "number") then minGUI_error_message("Wrong steps value for scrollbar " .. num); return end
+			if parent ~= nil and type(parent) ~= "number" then minGUI_error_message("Wrong parent for scrollbar " .. num); return end
+
+			-- reset flags
+			if flags == nil then
+				flags = 0
+			elseif type(flags) ~= "number" then
+				minGUI_error_message("Wrong flags for scrollbar " .. num)
+				return
+			end
+
+			if x == nil then x = 0 end
+			if y == nil then y = 0 end
+			if value == nil then value = 0 end
+			if stepsValue == nil then stepsValue = 1 end
+			if stepsValue < 1 then stepsValue = 1 end
+			if minValue == nil then minValue = 0 end
+
+			local size = height
+			local internalBarSize = 0
+			
+			local real_width = width
+			local real_height = height
+
+			-- vertical or horizontal scrollbar ?
+			if bit.band(flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+				if maxValue == nil then maxValue = height end
+
+				-- get buttons size
+				size = width
+				
+				-- fix real height
+				real_height = height - (size * 2)
+				internalBarSize = real_height
+			else
+				if maxValue == nil then maxValue = width end				
+
+				-- get buttons size
+				size = height
+				
+				-- fix real width
+				real_width = width - (size * 2)
+				internalBarSize = real_width
+			end
+			
+			-- correction of value...
+			minValue = math.floor(minValue + 0.5)
+			maxValue = math.floor(maxValue + 0.5)
+			
+			local value = math.min(math.max(math.floor(value + 0.5), minValue), maxValue)
+
+			-- calculate button's other size
+			local size_width = math.max(internalBarSize / stepsValue, MIN_SCROLLBAR_BUTTON_SIZE)
+			local size_height = size
+			
+			-- swap size & size 2 ?
+			if bit.band(flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+				local swap = size_height
+				size_height = size_width
+				size_width = swap
+			end
+				
+			-- initialize values
+			if minGUI.gtree[num] == nil then
+				if parent == nil or minGUI.ptree[parent] ~= nil then
+					if width > 0 and height > 0 then
+						minGUI.gtree[num] = {
+							num = num, tp = MG_SCROLLBAR, x = x, y = y, width = width, height = height, flags = flags, parent = parent,
+							down = false, down1 = false, down2 = false, size = size, size_width = size_width, size_height = size_height,
+							value = value, minValue = minValue, maxValue = maxValue, stepsValue = stepsValue, timer = 0,
+							rpen = 0, gpen = 0, bpen = 0, apen = 1,
+							canvas = love.graphics.newCanvas(real_width, real_height),
+							canvas1 = love.graphics.newCanvas(size, size),
+							canvas2 = love.graphics.newCanvas(size, size),
+							canvas3 = love.graphics.newCanvas(size_width, size_height)
+						}												
+					end
+				end
+			end			
 		end
 	}
 	
