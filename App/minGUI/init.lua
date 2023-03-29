@@ -779,7 +779,8 @@ function minGUI_init()
 				
 				-- correction of y
 				if y == -1 then
-					minGUI.gtree[num].cursory = #t
+					y = #t - 1
+					minGUI.gtree[num].cursory = y
 				end			
 
 				-- correction of x

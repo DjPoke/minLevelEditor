@@ -46,8 +46,12 @@ function minGUI_sub_string(text, v1, v2)
 	local byteoffset1 = utf8.offset(text, v1)
 
 	-- right utf8 char byte offset
-	local byteoffset2 = utf8.offset(text, v2 + 1) - 1
+	local byteoffset2 = -1
 
+	if v2 + 1 <= utf8.len(text) then
+		byteoffset2 = utf8.offset(text, v2 + 1) - 1
+	end
+	
 	return string.sub(text, byteoffset1, byteoffset2)
 end
 
