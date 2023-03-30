@@ -2,7 +2,7 @@
 -- minLevelEditor
 --
 -- by DjPoke
--- (c) 2023
+-- (MIT) 2023
 --================
 
 -- require minGUI
@@ -121,12 +121,12 @@ function love.load()
 	minGUI:add_button(16, 180, 548, 220, 25, "Copy collision's map to clipboard", 3)
 	
 	-- add scrollbars to the tilemap
-	minGUI:add_scrollbar(17, 8, 520, 1024, 20, 0, 0, MAX_MAP_SIZE, 1024 / mapWidth, nil, 2)
-	minGUI:add_scrollbar(18, 1032, 8, 20, 512, 0, 0, MAX_MAP_SIZE, 512 / mapHeight, MG_SCROLLBAR_VERTICAL, 2)
+	minGUI:add_scrollbar(17, 8, 520, 1024, 20, 0, 0, MAX_MAP_SIZE - 1, 1, nil, 2)
+	minGUI:add_scrollbar(18, 1032, 8, 20, 512, 0, 0, MAX_MAP_SIZE - 1, 1, MG_SCROLLBAR_VERTICAL, 2)
 
 	-- add scrollbars to the tileset
-	minGUI:add_scrollbar(19, 8, 520, 512, 20, 0, 0, MAX_TILESET_SIZE, 1, nil, 3)
-	minGUI:add_scrollbar(20, 520, 8, 20, 512, 0, 0, MAX_TILESET_SIZE, 1, MG_SCROLLBAR_VERTICAL, 3)
+	minGUI:add_scrollbar(19, 8, 520, 512, 20, 0, 0, MAX_TILESET_SIZE - 1, MAX_TILESET_SIZE, nil, 3)
+	minGUI:add_scrollbar(20, 520, 8, 20, 512, 0, 0, MAX_TILESET_SIZE - 1, MAX_TILESET_SIZE, MG_SCROLLBAR_VERTICAL, 3)
 
 	-- draw grids
 	redraw_tilemap_grid()

@@ -185,6 +185,9 @@ function minGUI_update_events(dt)
 								v.timer = minGUI.timer
 								v.down1 = true
 								getfocusFlag = true
+								v.value = v.value - v.inc
+								
+								if v.value < v.minValue then v.value = v.minValue end
 							end
 						end
 					end
@@ -195,6 +198,9 @@ function minGUI_update_events(dt)
 								v.timer = minGUI.timer
 								v.down2 = true
 								getfocusFlag = true
+								v.value = v.value + v.inc
+
+								if v.value > v.maxValue then v.value = v.maxValue end
 							end
 						end
 					end
@@ -312,7 +318,7 @@ function minGUI_update_events(dt)
 					if v.down1 == true then
 						local t = minGUI.timer - v.timer
 								
-						if t >= MG_QUICK_DELAY then
+						if t >= MG_MEDIUM_DELAY then
 							v.timer = minGUI.timer
 							v.value = v.value - v.inc
 								
@@ -329,7 +335,7 @@ function minGUI_update_events(dt)
 					if v.down2 == true then
 						local t = minGUI.timer - v.timer
 								
-						if t >= MG_QUICK_DELAY then
+						if t >= MG_MEDIUM_DELAY then
 							v.timer = minGUI.timer
 							v.value = v.value + v.inc
 							
