@@ -188,6 +188,8 @@ function minGUI_update_events(dt)
 								v.value = v.value - v.inc
 								
 								if v.value < v.minValue then v.value = v.minValue end
+							
+								table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_PRESSED})
 							end
 						end
 					end
@@ -201,6 +203,8 @@ function minGUI_update_events(dt)
 								v.value = v.value + v.inc
 
 								if v.value > v.maxValue then v.value = v.maxValue end
+							
+								table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_PRESSED})
 							end
 						end
 					end
@@ -323,6 +327,10 @@ function minGUI_update_events(dt)
 							v.value = v.value - v.inc
 								
 							if v.value < v.minValue then v.value = v.minValue end
+							
+							if b == MG_LEFT_BUTTON then
+								table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_DOWN})
+							end
 						end
 					end
 
@@ -340,6 +348,10 @@ function minGUI_update_events(dt)
 							v.value = v.value + v.inc
 							
 							if v.value > v.maxValue then v.value = v.maxValue end
+							
+							if b == MG_LEFT_BUTTON then
+								table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_DOWN})
+							end
 						end
 					end
 				end

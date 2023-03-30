@@ -1,6 +1,6 @@
 function love.conf(t)
     t.version = "11.4"
-    t.console = false
+    t.console = true
 
     t.window.title = "minLevelEditor"
     t.window.icon = nil

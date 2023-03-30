@@ -13,12 +13,16 @@ function love.load()
 	MAX_MAP_SIZE = 128
 	MAX_TILESET_SIZE = 64
 	DEFAULT_MAP_SIZE = 64
+	DEFAULT_TILESIZE = 16
+	
+	CANVAS_WIDTH = 1024
+	CANVAS_HEIGHT = 512
 	
 	BLACK = {r = 0, g = 0, b = 0, a = 1}
 	GREY = {r = 0.5, g = 0.5, b = 0.5, a = 1}
 	RED = {r = 1, g = 0, b = 0, a = 1}
 	
-	tileSize = 16
+	tileSize = DEFAULT_TILESIZE
 	tileset = nil
 	tileid = 0
 	tilequad = nil
@@ -35,6 +39,11 @@ function love.load()
 	steps = 0
 	xexport = 0
 	yexport = 0
+	
+	scrollbarOffset1 = 0
+	scrollbarOffset2 = 0
+	scrollbarOffset3 = 0
+	scrollbarOffset4 = 0
 	
 	-- create quads array
 	quad = {}
@@ -84,7 +93,7 @@ function love.load()
 	minGUI:add_panel(6, 8, 216, 112, 96)
 	
 	-- add canvas gadgets for tilemap and tileset
-	minGUI:add_canvas(1, 8, 8, 1024, 512, nil, 2)
+	minGUI:add_canvas(1, 8, 8, CANVAS_WIDTH, CANVAS_HEIGHT, nil, 2)
 	minGUI:add_canvas(2, 8, 8, 512, 512, nil, 3)
 
 	-- clear the canvas in black
@@ -121,19 +130,32 @@ function love.load()
 	minGUI:add_button(16, 180, 548, 220, 25, "Copy collision's map to clipboard", 3)
 	
 	-- add scrollbars to the tilemap
-	minGUI:add_scrollbar(17, 8, 520, 1024, 20, 0, 0, MAX_MAP_SIZE - 1, 1, nil, 2)
-	minGUI:add_scrollbar(18, 1032, 8, 20, 512, 0, 0, MAX_MAP_SIZE - 1, 1, MG_SCROLLBAR_VERTICAL, 2)
+	minGUI:add_scrollbar(17, 8, 520, CANVAS_WIDTH, 20, 0, 0, mapWidth - 1, 1, nil, 2)
+	minGUI:add_scrollbar(18, 1032, 8, 20, CANVAS_HEIGHT, 0, 0, mapHeight - 1, 1, MG_SCROLLBAR_VERTICAL, 2)
 
 	-- add scrollbars to the tileset
 	minGUI:add_scrollbar(19, 8, 520, 512, 20, 0, 0, MAX_TILESET_SIZE - 1, MAX_TILESET_SIZE, nil, 3)
 	minGUI:add_scrollbar(20, 520, 8, 20, 512, 0, 0, MAX_TILESET_SIZE - 1, MAX_TILESET_SIZE, MG_SCROLLBAR_VERTICAL, 3)
+	
+	-- reset default focuset gadget
+	minGUI:set_focus(nil)
+
+	-- resize scrollbars
+	local w = minGUI:get_gadget_text(13)
+	local h = minGUI:get_gadget_text(14)
+	
+	if w ~= "" then mapWidth = tonumber(w) end
+	if h ~= "" then mapHeight = tonumber(h) end
+	
+	--
+	canvasScrollWidth = math.floor(CANVAS_WIDTH / (tileSize * tilemapZoom))
+	canvasScrollHeight = math.floor(CANVAS_HEIGHT / (tileSize * tilemapZoom))
+
+	resize_scrollbars()
 
 	-- draw grids
 	redraw_tilemap_grid()
 	redraw_tileset_grid()
-	
-	-- reset default focuset gadget
-	minGUI:set_focus(nil)
 end
 
 -- default love.textinput function
@@ -167,7 +189,11 @@ function love.update(dt)
 	
 	if oldmapWidth ~= mapWidth or oldmapHeight ~= mapHeight then
 		minGUI:clear_canvas(1, 0, 0, 0, 1)
-		
+	
+		-- resize scrollbars
+		resize_scrollbars()
+
+		-- redraw tilemap
 		redraw_tilemap()
 		redraw_tilemap_grid()
 	end
@@ -178,6 +204,9 @@ function love.update(dt)
 	if minGUI:get_gadget_state(4) == true then
 		if tileSize == 32 then
 			tileSize = 16
+			
+			-- resize scrollbars
+			resize_scrollbars()
 
 			-- reset quad size
 			requad_all()
@@ -196,6 +225,9 @@ function love.update(dt)
 	elseif minGUI:get_gadget_state(5) == true then
 		if tileSize == 16 then			
 			tileSize = 32
+			
+			-- resize scrollbars
+			resize_scrollbars()
 
 			-- reset quad size
 			requad_all()
@@ -220,6 +252,10 @@ function love.update(dt)
 		if tilemapZoom == 1 then
 			tilemapZoom = 2
 			
+			-- resize scrollbars
+			resize_scrollbars()
+
+			-- redraw the tilemap
 			redraw_tilemap()
 			redraw_tilemap_grid()
 		end
@@ -227,6 +263,10 @@ function love.update(dt)
 		if tilemapZoom == 2 then
 			tilemapZoom = 1			
 			
+			-- resize scrollbars
+			resize_scrollbars()
+
+			-- redraw the tilemap
 			redraw_tilemap()
 			redraw_tilemap_grid()
 		end
@@ -238,14 +278,22 @@ function love.update(dt)
 	if minGUI:get_gadget_state(10) == true then
 		if tilesetZoom == 1 then
 			tilesetZoom = 2
-			
+
+			-- resize scrollbars
+			resize_scrollbars()
+
+			-- draw tileset
 			redraw_tileset()
 			redraw_tileset_grid()
 		end
 	else
 		if tilesetZoom == 2 then
 			tilesetZoom = 1
-			
+
+			-- resize scrollbars
+			resize_scrollbars()
+
+			-- draw tileset
 			redraw_tileset()
 			redraw_tileset_grid()
 		end
@@ -269,8 +317,8 @@ function love.update(dt)
 	-- get new events
 	local eventGadget, eventType = minGUI:get_gadget_events()
 	
-	-- if button 8 has been clicked, load the tileset
 	if eventType == MG_EVENT_LEFT_MOUSE_CLICK then
+		-- if button 8 has been clicked, load the tileset
 		if eventGadget == 8 then
 			load_tileset()
 		elseif eventGadget == 11 then
@@ -342,19 +390,21 @@ function love.update(dt)
 
 			love.system.setClipboardText(export_string)
 		end				
-	-- if the left mouse is down on the canvas 1
 	elseif eventType == MG_EVENT_LEFT_MOUSE_DOWN then
+		-- if the left mouse is down on the canvas 1
 		if eventGadget == 1 then
 			if tileset ~= nil then
 				local x2 = math.floor((minGUI.mouse.x - minGUI:get_panel_x(2) - minGUI:get_gadget_x(1)) / (tileSize * tilemapZoom))
 				local y2 = math.floor((minGUI.mouse.y - minGUI:get_panel_y(2) - minGUI:get_gadget_y(1)) / (tileSize * tilemapZoom))
-				
+								
 				if x2 < mapWidth then
 					if y2 < mapHeight then
-				
 						local x = x2 * (tileSize * tilemapZoom)
 						local y = y2 * (tileSize * tilemapZoom)
-				
+						
+						x2 = x2 + scrollbarOffset1
+						y2 = y2 + scrollbarOffset2
+						
 						map[x2][y2] = tileid
 				
 						minGUI:draw_rectangle_to_canvas(1, "fill", x, y, tileSize * tilemapZoom, tileSize * tilemapZoom, BLACK)
@@ -372,9 +422,60 @@ function love.update(dt)
 					end
 				end
 			end
+		elseif eventGadget == 17 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset1 = minGUI:get_gadget_state(17)
+			
+			redraw_tilemap()
+			redraw_tilemap_grid()
+		elseif eventGadget == 18 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset2 = minGUI:get_gadget_state(18)
+			
+			redraw_tilemap()
+			redraw_tilemap_grid()
+		elseif eventGadget == 19 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset3 = minGUI:get_gadget_state(19)
+			
+			redraw_tileset()
+			redraw_tileset_grid()
+		elseif eventGadget == 20 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset4 = minGUI:get_gadget_state(20)
+			
+			redraw_tileset()
+			redraw_tileset_grid()
 		end
-	-- if the right mouse is down on the canvas 1
+	elseif eventType == MG_EVENT_LEFT_MOUSE_PRESSED then
+		-- if the left mouse is pressed on the scrollbar
+		if eventGadget == 17 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset1 = minGUI:get_gadget_state(17)
+			
+			redraw_tilemap()
+			redraw_tilemap_grid()
+		elseif eventGadget == 18 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset2 = minGUI:get_gadget_state(18)
+			
+			redraw_tilemap()
+			redraw_tilemap_grid()
+		elseif eventGadget == 19 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset3 = minGUI:get_gadget_state(19)
+			
+			redraw_tileset()
+			redraw_tileset_grid()
+		elseif eventGadget == 20 then
+			-- if the left mouse is down on the scrollbar
+			scrollbarOffset4 = minGUI:get_gadget_state(20)
+
+			redraw_tileset()
+			redraw_tileset_grid()
+		end
 	elseif eventType == MG_EVENT_RIGHT_MOUSE_DOWN then
+		-- if the right mouse is down on the canvas 1
 		if eventGadget == 1 then
 			if tileset ~= nil then
 				local x2 = math.floor((minGUI.mouse.x - minGUI:get_panel_x(2) - minGUI:get_gadget_x(1)) / (tileSize * tilemapZoom))
@@ -395,8 +496,8 @@ function love.update(dt)
 				end
 			end
 		end
-	-- if right mouse click on canvas 2
 	elseif eventType == MG_EVENT_RIGHT_MOUSE_CLICK then
+		-- if right mouse click on canvas 2
 		if eventGadget == 2 then
 			if tileset ~= nil then
 				local x = math.floor((minGUI.mouse.x - minGUI:get_panel_x(3) - minGUI:get_gadget_x(2)) / (tileSize * tilesetZoom))
@@ -424,29 +525,37 @@ function love.draw()
 	if export == true then love.graphics.print(tostring(xexport), 0, 0) end
 end
 
---================================================
+--===================================================================================================================================================
 
 -- draw the grid on the first canvas
 function redraw_tilemap_grid()
+	-- calculate limits
+	local lx1 = 0 - scrollbarOffset1
+	local ly1 = 0 - scrollbarOffset2
+	local lx2 = math.min(canvasScrollWidth, mapWidth) - 1 - scrollbarOffset1
+	local ly2 = math.min(canvasScrollHeight, mapHeight) - 1 - scrollbarOffset2
+
 	-- draw the grid on first canvas, on top of the tilemap
-	for y = 0, mapHeight - 1 do
-		for x = 0, mapWidth - 1 do
-			local x2 = x * tileSize * tilemapZoom
-			local y2 = y * tileSize * tilemapZoom
-			
-			if tileset == nil then
-				minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
-			else
-				local t = map[x][y]
-			
-				local ty = math.floor(t / (tilesetWidth / tileSize))
-				local tx = t - (ty * (tilesetWidth / tileSize))
-			
-				if wallMap[tx][ty] == false then
+	for y = ly1, ly2 do
+		for x = lx1, lx2 do
+			if x >= 0 and x < mapWidth and y >= 0 and y < mapHeight then			
+				local x2 = x * tileSize * tilemapZoom
+				local y2 = y * tileSize * tilemapZoom
+				
+				if tileset == nil then
 					minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
 				else
-					minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, RED)
-					minGUI:draw_rectangle_to_canvas(1, "line", x2 + 1, y2 + 1, (tileSize * tilemapZoom) - 2, (tileSize * tilemapZoom) - 2, RED)
+					local t = map[x][y]
+				
+					local ty = math.floor(t / (tilesetWidth / tileSize))
+					local tx = t - (ty * (tilesetWidth / tileSize))
+				
+					if wallMap[tx][ty] == false then
+						minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, GREY)
+					else
+						minGUI:draw_rectangle_to_canvas(1, "line", x2, y2, tileSize * tilemapZoom, tileSize * tilemapZoom, RED)
+						minGUI:draw_rectangle_to_canvas(1, "line", x2 + 1, y2 + 1, (tileSize * tilemapZoom) - 2, (tileSize * tilemapZoom) - 2, RED)
+					end
 				end
 			end
 		end
@@ -476,14 +585,20 @@ function redraw_tilemap()
 	
 	-- exit function on error
 	if tileset == nil then return end
-
+	
+	-- calculate limits
+	local lx1 = 0
+	local ly1 = 0
+	local lx2 = math.min(canvasScrollWidth, mapWidth) - 1
+	local ly2 = math.min(canvasScrollHeight, mapHeight) - 1
+		
 	-- draw the grid on first canvas, and the tilemap
-	for y = 0, (mapHeight - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do
-		for x = 0, (mapWidth - 1) * tileSize * tilemapZoom, tileSize * tilemapZoom do
-			local x2 = math.floor(x / (tileSize * tilemapZoom))
-			local y2 = math.floor(y / (tileSize * tilemapZoom))
+	for y = ly1, ly2 do
+		for x = lx1, lx2 do
+			local x2 = math.floor((x - scrollbarOffset1) * tileSize * tilemapZoom)
+			local y2 = math.floor((y - scrollbarOffset2) * tileSize * tilemapZoom)
 			
-			minGUI:draw_quad_to_canvas(1, tileset, quad[map[x2][y2]], x, y, tilemapZoom, tilemapZoom)
+			minGUI:draw_quad_to_canvas(1, tileset, quad[map[x][y]], x2, y2, tilemapZoom, tilemapZoom)
 		end
 	end
 end
@@ -582,5 +697,22 @@ function reset_walls()
 		for y = 0, MAX_TILESET_SIZE - 1 do
 			wallMap[x][y] = false
 		end
+	end
+end
+
+-- resize scrollbars
+function resize_scrollbars()
+	local width = math.max(mapWidth - canvasScrollWidth, 0)
+	local height = math.max(mapHeight - canvasScrollHeight, 0)
+	
+	-- resize tilemap's scrollbars
+	minGUI:set_gadget_attribute(17, MG_SCROLLBAR_MAX_VALUE, (width * tilemapZoom * tileSize / DEFAULT_TILESIZE))
+	minGUI:set_gadget_attribute(18, MG_SCROLLBAR_MAX_VALUE, (height * tilemapZoom * tileSize / DEFAULT_TILESIZE))
+
+	-- if the tileset exists...
+	if tileset ~= nil then
+		-- resize tileset's scrollbars
+		minGUI:set_gadget_attribute(19, MG_SCROLLBAR_MAX_VALUE, ((tilesetWidth / tileSize) * tilesetZoom))
+		minGUI:set_gadget_attribute(20, MG_SCROLLBAR_MAX_VALUE, ((tilesetHeight / tileSize) * tilesetZoom))
 	end
 end
