@@ -160,6 +160,9 @@ function love.load()
 	-- draw grids
 	redraw_tilemap_grid()
 	redraw_tileset_grid()
+	
+	-- set the save folder
+	love.filesystem.setIdentity("minLevelEditor")
 end
 
 -- default love.textinput function
