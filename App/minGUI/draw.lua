@@ -331,14 +331,16 @@ function minGUI_draw_gadget(w, ox, oy)
 			love.graphics.draw(w.canvas, ox + w.x + w.size, oy + w.y)
 		end
 		
+		local div = (w.maxValue - w.minValue) / w.inc
+		
 		if bit.band(w.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
 			love.graphics.draw(w.canvas1, ox + w.x, oy + w.y)
 			love.graphics.draw(w.canvas2, ox + w.x, oy + w.y + w.height - w.size)
-			love.graphics.draw(w.canvas3, ox + w.x, oy + w.y + w.size + (w.size_height * (w.value - w.minValue)))
+			love.graphics.draw(w.canvas3, ox + w.x, oy + w.y + w.size + ((w.value - w.minValue) * w.min_size / div))
 		else
 			love.graphics.draw(w.canvas1, ox + w.x, oy + w.y)
 			love.graphics.draw(w.canvas2, ox + w.x + w.width - w.size, oy + w.y)
-			love.graphics.draw(w.canvas3, ox + w.x + w.size + (w.size_width * ((w.value - w.minValue))), oy + w.y)
+			love.graphics.draw(w.canvas3, ox + w.x + w.size + ((w.value - w.minValue) * w.min_size / div), oy + w.y)
 		end
 
 	end
