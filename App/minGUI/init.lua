@@ -154,7 +154,7 @@ function minGUI_init()
 			-- don't execute next instructions in case of exit process is true
 			if minGUI.exitProcess == true then return end
 			
-			if #minGUI.estack ~= 0 then
+			if #minGUI.tstack ~= 0 then
 				local eventTimer = minGUI.tstack[#minGUI.tstack].eventTimer
 				local eventType = minGUI.tstack[#minGUI.tstack].eventType
 				

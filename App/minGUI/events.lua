@@ -179,6 +179,45 @@ function minGUI_update_events(dt)
 						end
 					end
 				elseif v.tp == MG_SCROLLBAR then
+					local value = 0
+					
+					if bit.band(v.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+						if minGUI.mouse.x >= ox + v.x and minGUI.mouse.x < ox + v.x + v.size then
+							if minGUI.mouse.y >= oy + v.y + v.size and minGUI.mouse.y < oy + v.y + v.height - v.size then
+								v.down = true
+								value = ((minGUI.mouse.y - (oy + v.y + v.size)) / v.real_height) * (v.maxValue - v.minValue)
+							end
+						end
+					else
+						if minGUI.mouse.x >= ox + v.x + v.size and minGUI.mouse.x < ox + v.x + v.width - v.size then
+							if minGUI.mouse.y >= oy + v.y and minGUI.mouse.y < oy + v.y + v.size then
+								v.down = true
+								value = ((minGUI.mouse.x - (ox + v.x + v.size)) / v.real_width) * (v.maxValue - v.minValue)
+							end
+						end
+					end
+
+					if v.down == true then
+						if b == MG_LEFT_BUTTON then
+							getfocusFlag = true
+
+							local lng1 = (v.maxValue - v.minValue)
+							local lng2 = lng1 / v.stepsValue
+						
+							value = value - v.minValue
+							value = math.floor(value / lng2)
+							value = value * lng1 / (v.stepsValue - 1)
+							value = value + v.minValue
+							value = math.min(math.max(value, v.minValue), v.maxValue)
+							v.value = value
+								
+							if v.value < v.minValue then v.value = v.minValue end
+							if v.value > v.maxValue then v.value = v.maxValue end
+							
+							table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_PRESSED})
+						end
+					end
+
 					if minGUI.mouse.x >= ox + v.x and minGUI.mouse.x < ox + v.x + v.size then
 						if minGUI.mouse.y >= oy + v.y and minGUI.mouse.y < oy + v.y + v.size then
 							if b == MG_LEFT_BUTTON then
@@ -312,7 +351,47 @@ function minGUI_update_events(dt)
 					if b == MG_RIGHT_BUTTON then
 						if v.down.right == true then table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_RIGHT_MOUSE_DOWN}) end
 					end
-				elseif v.tp == MG_SCROLLBAR then					
+				elseif v.tp == MG_SCROLLBAR then
+					local value = 0
+					
+					if bit.band(v.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+						if minGUI.mouse.x < ox + v.x or minGUI.mouse.x >= ox + v.x + v.size then
+							if b == MG_LEFT_BUTTON then v.down = false end
+						elseif minGUI.mouse.y < oy + v.y + v.size or minGUI.mouse.y >= oy + v.y + v.height - v.size then
+							if b == MG_LEFT_BUTTON then v.down = false end
+						else
+							value = ((minGUI.mouse.y - (oy + v.y + v.size)) / v.real_height) * (v.maxValue - v.minValue)
+						end
+					else
+						if minGUI.mouse.x < ox + v.x + v.size or minGUI.mouse.x >= ox + v.x + v.width - v.size then
+							if b == MG_LEFT_BUTTON then v.down = false end
+						elseif minGUI.mouse.y < oy + v.y or minGUI.mouse.y >= oy + v.y + v.size then
+							if b == MG_LEFT_BUTTON then v.down = false end
+						else
+							value = ((minGUI.mouse.x - (ox + v.x + v.size)) / v.real_width) * (v.maxValue - v.minValue)
+						end
+					end
+					
+					if v.down == true then
+						local lng1 = (v.maxValue - v.minValue)
+						local lng2 = lng1 / v.stepsValue
+						
+						value = value - v.minValue
+						value = math.floor(value / lng2)
+						value = value * lng1 / (v.stepsValue - 1)
+						value = value + v.minValue
+						value = math.min(math.max(value, v.minValue), v.maxValue)
+						v.value = value
+								
+						if v.value < v.minValue then v.value = v.minValue end
+						if v.value > v.maxValue then v.value = v.maxValue end
+							
+						if b == MG_LEFT_BUTTON then
+							table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_DOWN})
+						end
+					end
+
+					
 					if minGUI.mouse.x < ox + v.x or minGUI.mouse.x >= ox + v.x + v.size then
 						if b == MG_LEFT_BUTTON then v.down1 = false end
 					elseif minGUI.mouse.y < oy + v.y or minGUI.mouse.y >= oy + v.y + v.size then
@@ -431,6 +510,28 @@ function minGUI_update_events(dt)
 						end
 					end
 				elseif v.tp == MG_SCROLLBAR then
+					if bit.band(v.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+						if minGUI.mouse.x >= ox + v.x and minGUI.mouse.x < ox + v.x + v.size then
+							if minGUI.mouse.y >= oy + v.y + v.size and minGUI.mouse.y < oy + v.y + v.height - v.size then
+								if b == MG_LEFT_BUTTON then
+									if v.down == true then table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_RELEASED}) end
+
+									v.down = false
+								end
+							end
+						end
+					else
+						if minGUI.mouse.x >= ox + v.x + v.size and minGUI.mouse.x < ox + v.x + v.width - v.size then
+							if minGUI.mouse.y >= oy + v.y and minGUI.mouse.y < oy + v.y + v.size then
+								if b == MG_LEFT_BUTTON then
+									if v.down == true then table.insert(minGUI.estack, {eventGadget = i, eventType = MG_EVENT_LEFT_MOUSE_RELEASED}) end
+
+									v.down = false
+								end
+							end
+						end
+					end
+
 					if minGUI.mouse.x >= ox + v.x and minGUI.mouse.x < ox + v.x + v.size then
 						if minGUI.mouse.y >= oy + v.y and minGUI.mouse.y < oy + v.y + v.size then
 							if b == MG_LEFT_BUTTON then
