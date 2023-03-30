@@ -147,10 +147,7 @@ function love.load()
 	if w ~= "" then mapWidth = tonumber(w) end
 	if h ~= "" then mapHeight = tonumber(h) end
 	
-	--
-	canvasScrollWidth = math.floor(CANVAS_WIDTH / (tileSize * tilemapZoom))
-	canvasScrollHeight = math.floor(CANVAS_HEIGHT / (tileSize * tilemapZoom))
-
+	-- resize scrollbars
 	resize_scrollbars()
 
 	-- draw grids
@@ -189,7 +186,15 @@ function love.update(dt)
 	
 	if oldmapWidth ~= mapWidth or oldmapHeight ~= mapHeight then
 		minGUI:clear_canvas(1, 0, 0, 0, 1)
+
+		-- calculate canvas screen size, in tiles
+		canvasScrollWidth = math.floor(CANVAS_WIDTH / (tileSize * tilemapZoom))
+		canvasScrollHeight = math.floor(CANVAS_HEIGHT / (tileSize * tilemapZoom))
 	
+		-- calculate new scroll values
+		scrollbarOffset1 = math.min(math.max(mapWidth - canvasScrollWidth, 0), scrollbarOffset1)
+		scrollbarOffset2 = math.min(math.max(mapHeight - canvasScrollHeight, 0), scrollbarOffset2)
+		
 		-- resize scrollbars
 		resize_scrollbars()
 
@@ -214,13 +219,8 @@ function love.update(dt)
 			-- clear the map
 			clear_map()
 			
-			-- redraw tileset
-			redraw_tileset()
-			redraw_tileset_grid()
-			
-			-- redraw tilemap
-			redraw_tilemap()
-			redraw_tilemap_grid()
+			-- redraw all
+			redraw_all()
 		end
 	elseif minGUI:get_gadget_state(5) == true then
 		if tileSize == 16 then			
@@ -235,13 +235,8 @@ function love.update(dt)
 			-- clear the map
 			clear_map()
 
-			-- redraw tileset
-			redraw_tileset()
-			redraw_tileset_grid()
-			
-			-- redraw tilemap
-			redraw_tilemap()
-			redraw_tilemap_grid()
+			-- redraw all
+			redraw_all()
 		end
 	end
 
@@ -508,10 +503,8 @@ function love.update(dt)
 
 				if wallMap[x][y] == false then wallMap[x][y] = true else wallMap[x][y] = false end
 
-				redraw_tileset()
-				redraw_tileset_grid()
-				redraw_tilemap()
-				redraw_tilemap_grid()
+				-- redraw all
+				redraw_all()
 			end
 		end
 	end
@@ -527,13 +520,47 @@ end
 
 --===================================================================================================================================================
 
+-- redraw the tilemap
+function redraw_tilemap()
+	minGUI:clear_canvas(1, 0, 0, 0, 1)
+	
+	-- exit function on error
+	if tileset == nil then return end
+
+	-- calculate canvas screen size, in tiles
+	canvasScrollWidth = math.floor(CANVAS_WIDTH / (tileSize * tilemapZoom))
+	canvasScrollHeight = math.floor(CANVAS_HEIGHT / (tileSize * tilemapZoom))
+	
+	-- calculate limits
+	local lx1 = 0
+	local ly1 = 0
+	local lx2 = math.max(canvasScrollWidth, mapWidth) - 1
+	local ly2 = math.max(canvasScrollHeight, mapHeight) - 1
+		
+	-- draw the grid on first canvas, and the tilemap
+	for y = ly1, ly2 do
+		for x = lx1, lx2 do
+			if x >= 0 and x < mapWidth and y >= 0 and y < mapHeight then			
+				local x2 = math.floor((x - scrollbarOffset1) * tileSize * tilemapZoom)
+				local y2 = math.floor((y - scrollbarOffset2) * tileSize * tilemapZoom)
+			
+				minGUI:draw_quad_to_canvas(1, tileset, quad[map[x][y]], x2, y2, tilemapZoom, tilemapZoom)
+			end
+		end
+	end
+end
+
 -- draw the grid on the first canvas
 function redraw_tilemap_grid()
+	-- calculate canvas screen size, in tiles
+	canvasScrollWidth = math.floor(CANVAS_WIDTH / (tileSize * tilemapZoom))
+	canvasScrollHeight = math.floor(CANVAS_HEIGHT / (tileSize * tilemapZoom))
+	
 	-- calculate limits
 	local lx1 = 0 - scrollbarOffset1
 	local ly1 = 0 - scrollbarOffset2
-	local lx2 = math.min(canvasScrollWidth, mapWidth) - 1 - scrollbarOffset1
-	local ly2 = math.min(canvasScrollHeight, mapHeight) - 1 - scrollbarOffset2
+	local lx2 = math.max(canvasScrollWidth, mapWidth) - 1 - scrollbarOffset1
+	local ly2 = math.max(canvasScrollHeight, mapHeight) - 1 - scrollbarOffset2
 
 	-- draw the grid on first canvas, on top of the tilemap
 	for y = ly1, ly2 do
@@ -562,6 +589,18 @@ function redraw_tilemap_grid()
 	end
 end
 
+-- redraw the tileset
+function redraw_tileset()
+	minGUI:clear_canvas(2, 0, 0, 0, 1)
+	
+	if tileset ~= nil then
+		minGUI:draw_image_to_canvas(2, tileset, 0, 0, tilesetZoom, tilesetZoom)
+		
+		tilesetWidth = tileset:getWidth()
+		tilesetHeight = tileset:getHeight()
+	end
+end
+
 -- draw the grid on the second canvas
 function redraw_tileset_grid()
 	local tx = tilesetWidth
@@ -576,42 +615,6 @@ function redraw_tileset_grid()
 				minGUI:draw_rectangle_to_canvas(2, "line", (x * tilesetZoom) + 1, (y * tilesetZoom) + 1, (tileSize * tilesetZoom) - 2, (tileSize * tilesetZoom) - 2, RED)
 			end
 		end
-	end
-end
-
--- redraw the tilemap
-function redraw_tilemap()
-	minGUI:clear_canvas(1, 0, 0, 0, 1)
-	
-	-- exit function on error
-	if tileset == nil then return end
-	
-	-- calculate limits
-	local lx1 = 0
-	local ly1 = 0
-	local lx2 = math.min(canvasScrollWidth, mapWidth) - 1
-	local ly2 = math.min(canvasScrollHeight, mapHeight) - 1
-		
-	-- draw the grid on first canvas, and the tilemap
-	for y = ly1, ly2 do
-		for x = lx1, lx2 do
-			local x2 = math.floor((x - scrollbarOffset1) * tileSize * tilemapZoom)
-			local y2 = math.floor((y - scrollbarOffset2) * tileSize * tilemapZoom)
-			
-			minGUI:draw_quad_to_canvas(1, tileset, quad[map[x][y]], x2, y2, tilemapZoom, tilemapZoom)
-		end
-	end
-end
-
--- redraw the tileset
-function redraw_tileset()
-	minGUI:clear_canvas(2, 0, 0, 0, 1)
-	
-	if tileset ~= nil then
-		minGUI:draw_image_to_canvas(2, tileset, 0, 0, tilesetZoom, tilesetZoom)
-		
-		tilesetWidth = tileset:getWidth()
-		tilesetHeight = tileset:getHeight()
 	end
 end
 		
@@ -702,12 +705,16 @@ end
 
 -- resize scrollbars
 function resize_scrollbars()
+	-- calculate canvas screen size, in tiles
+	canvasScrollWidth = math.floor(CANVAS_WIDTH / (tileSize * tilemapZoom))
+	canvasScrollHeight = math.floor(CANVAS_HEIGHT / (tileSize * tilemapZoom))
+	
 	local width = math.max(mapWidth - canvasScrollWidth, 0)
 	local height = math.max(mapHeight - canvasScrollHeight, 0)
 	
 	-- resize tilemap's scrollbars
-	minGUI:set_gadget_attribute(17, MG_SCROLLBAR_MAX_VALUE, (width * tilemapZoom * tileSize / DEFAULT_TILESIZE))
-	minGUI:set_gadget_attribute(18, MG_SCROLLBAR_MAX_VALUE, (height * tilemapZoom * tileSize / DEFAULT_TILESIZE))
+	minGUI:set_gadget_attribute(17, MG_SCROLLBAR_MAX_VALUE, width)
+	minGUI:set_gadget_attribute(18, MG_SCROLLBAR_MAX_VALUE, height)
 
 	-- if the tileset exists...
 	if tileset ~= nil then
@@ -715,4 +722,15 @@ function resize_scrollbars()
 		minGUI:set_gadget_attribute(19, MG_SCROLLBAR_MAX_VALUE, ((tilesetWidth / tileSize) * tilesetZoom))
 		minGUI:set_gadget_attribute(20, MG_SCROLLBAR_MAX_VALUE, ((tilesetHeight / tileSize) * tilesetZoom))
 	end
+end
+
+-- redraw all
+function redraw_all()
+	-- redraw tileset
+	redraw_tileset()
+	redraw_tileset_grid()
+			
+	-- redraw tilemap
+	redraw_tilemap()
+	redraw_tilemap_grid()
 end
