@@ -191,15 +191,13 @@ function minGUI_init()
 					elseif minGUI.gtree[num].tp == MG_LABEL then
 						-- replace the text
 						minGUI.gtree[num].text = text
-					end
-				else
 					-- if the gadget is a spin gadget...
-					if minGUI.gtree[num].tp == MG_SPIN then
+					elseif minGUI.gtree[num].tp == MG_SPIN then
 						-- replace the value
 						minGUI.gtree[num].text = frameTextValue(math.floor(tonumber(text) + 0.5), minGUI.gtree[num].minValue, minGUI.gtree[num].maxValue)
 
-						minGUI_shift_text(num, text)
-					end				
+						minGUI_shift_text(num, text)		
+					end
 				end
 			end
 		end,

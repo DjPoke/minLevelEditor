@@ -91,6 +91,7 @@ function love.load()
 	minGUI:add_panel(4, 8, 8, 112, 96)
 	minGUI:add_panel(5, 8, 112, 112, 96)
 	minGUI:add_panel(6, 8, 216, 112, 96)
+	minGUI:add_panel(7, 8, 328, 112, 120)
 	
 	-- add canvas gadgets for tilemap and tileset
 	minGUI:add_canvas(1, 8, 8, CANVAS_WIDTH, CANVAS_HEIGHT, nil, 2)
@@ -136,6 +137,12 @@ function love.load()
 	-- add scrollbars to the tileset
 	minGUI:add_scrollbar(19, 8, 520, 512, 20, 0, 0, MAX_TILESET_SIZE - 1, MAX_TILESET_SIZE, nil, 3)
 	minGUI:add_scrollbar(20, 520, 8, 20, 512, 0, 0, MAX_TILESET_SIZE - 1, MAX_TILESET_SIZE, MG_SCROLLBAR_VERTICAL, 3)
+
+	-- add a button to save temp maps
+	minGUI:add_label(21, 8, 8, 100, 25, "PROJECT", MG_ALIGN_CENTER,  7)
+	minGUI:add_string(22, 8, 37, 100, 25, "1.map", nil, 7)
+	minGUI:add_button(23, 8, 64, 100, 25, "Load map...", 7)
+	minGUI:add_button(24, 8, 91, 100, 25, "Save map...", 7)
 	
 	-- reset default focuset gadget
 	minGUI:set_focus(nil)
@@ -384,6 +391,57 @@ function love.update(dt)
 			export_string = export_string .. "}"
 
 			love.system.setClipboardText(export_string)
+		elseif eventGadget == 23 then
+			-- load map file
+			local filename = minGUI:get_gadget_text(22)
+			
+			if love.filesystem.getInfo(filename) then
+				local t = {}
+				
+				for line in love.filesystem.lines(filename) do
+					table.insert(t, line)
+				end
+				
+				-- clear the map
+				clear_map()
+
+				-- replace the map
+				mapWidth = tonumber(t[1])
+				mapHeight = tonumber(t[2])
+				
+				cpt = 3
+				
+				for y = 0, mapHeight - 1 do
+					for x = 0, mapWidth - 1 do
+						map[x][y] = tonumber(t[cpt])
+						cpt = cpt + 1
+					end
+				end
+				
+				minGUI:set_gadget_text(13, tostring(mapWidth))
+				minGUI:set_gadget_text(14, tostring(mapHeight))
+				
+				redraw_tilemap()
+				redraw_tilemap_grid()
+			else
+				minGUI:error_message("File does not exist !")
+			end
+		elseif eventGadget == 24 then
+			-- save map file
+			local filename = minGUI:get_gadget_text(22)
+			local data = tostring(mapWidth) .. "\r\n" .. tostring(mapHeight) .. "\r\n"
+
+			for y = 0, mapHeight - 1 do
+				for x = 0, mapWidth - 1 do
+					data = data .. tostring(map[x][y]) .. "\r\n"
+				end
+			end			
+			
+			local success, message = love.filesystem.write(filename, data)
+			
+			if not success then
+				minGUI:error_message(message)
+			end
 		end				
 	elseif eventType == MG_EVENT_LEFT_MOUSE_DOWN then
 		-- if the left mouse is down on the canvas 1
