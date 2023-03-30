@@ -11,8 +11,8 @@ require "minGUI.minGUI"
 -- default love.load function
 function love.load()
 	MAX_MAP_SIZE = 128
-	DEFAULT_MAP_SIZE = 64
 	MAX_TILESET_SIZE = 64
+	DEFAULT_MAP_SIZE = 64
 	
 	BLACK = {r = 0, g = 0, b = 0, a = 1}
 	GREY = {r = 0.5, g = 0.5, b = 0.5, a = 1}
@@ -76,9 +76,9 @@ function love.load()
 	minGUI:set_bgcolor(0.5, 0.5, 0.5, 1)
 
 	-- add all panels
-	minGUI:add_panel(1, 0, 0, 128, 557)
-	minGUI:add_panel(2, 128, 0, 1040, 557)
-	minGUI:add_panel(3, 1168, 0, 528, 557)
+	minGUI:add_panel(1, 0, 0, 128, 577)
+	minGUI:add_panel(2, 128, 0, 1060, 577)
+	minGUI:add_panel(3, 1188, 0, 548, 577)
 	minGUI:add_panel(4, 8, 8, 112, 96)
 	minGUI:add_panel(5, 8, 112, 112, 96)
 	minGUI:add_panel(6, 8, 216, 112, 96)
@@ -103,22 +103,30 @@ function love.load()
 	minGUI:add_button(8, 8, 64, 100, 25, "Load", 5)
 
 	-- zoom x 2 checkboxes
-	minGUI:add_checkbox(9, 8, 524, 100, 25, "Zoom x 2", 2)
+	minGUI:add_checkbox(9, 8, 548, 100, 25, "Zoom x 2", 2)
 
 	-- zoom x 2 checkboxes
-	minGUI:add_checkbox(10, 8, 524, 100, 25, "Zoom x 2", 3)
+	minGUI:add_checkbox(10, 8, 548, 100, 25, "Zoom x 2", 3)
 
 	-- button to copy the map to clipboard
-	minGUI:add_button(11, 420, 524, 160, 25, "Copy map to clipboard", 2)
+	minGUI:add_button(11, 420, 548, 160, 25, "Copy map to clipboard", 2)
 
 	minGUI:add_label(12, 8, 8, 100, 25, "MAP SIZE", MG_ALIGN_CENTER,  6)
 	minGUI:add_spin(13, 8, 37, 100, 25, mapWidth, 1, MAX_MAP_SIZE, 6)
 	minGUI:add_spin(14, 8, 64, 100, 25, mapHeight, 1, MAX_MAP_SIZE, 6)
 
-	minGUI:add_button(15, 320, 524, 100, 25, "Clear the map", 2)
+	minGUI:add_button(15, 320, 548, 100, 25, "Clear the map", 2)
 
 	-- button to copy the collision map to clipboard
-	minGUI:add_button(16, 180, 524, 220, 25, "Copy collision's map to clipboard", 3)
+	minGUI:add_button(16, 180, 548, 220, 25, "Copy collision's map to clipboard", 3)
+	
+	-- add scrollbars to the tilemap
+	minGUI:add_scrollbar(17, 8, 520, 1024, 20, 0, 0, MAX_MAP_SIZE, MAX_MAP_SIZE, nil, 2)
+	minGUI:add_scrollbar(18, 1032, 8, 20, 512, 0, 0, MAX_MAP_SIZE, MAX_MAP_SIZE, MG_SCROLLBAR_VERTICAL, 2)
+
+	-- add scrollbars to the tileset
+	minGUI:add_scrollbar(19, 8, 520, 512, 20, 0, 0, MAX_TILESET_SIZE, MAX_TILESET_SIZE, nil, 3)
+	minGUI:add_scrollbar(20, 520, 8, 20, 512, 0, 0, MAX_TILESET_SIZE, MAX_TILESET_SIZE, MG_SCROLLBAR_VERTICAL, 3)
 
 	-- draw grids
 	redraw_tilemap_grid()

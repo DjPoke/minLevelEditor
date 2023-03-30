@@ -4,8 +4,8 @@ function love.conf(t)
 
     t.window.title = "minLevelEditor"
     t.window.icon = nil
-    t.window.width = 1696
-    t.window.height = 557
+    t.window.width = 1736
+    t.window.height = 577
     t.window.borderless = false
     t.window.resizable = false
     t.window.fullscreen = false
