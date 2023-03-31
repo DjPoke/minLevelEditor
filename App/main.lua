@@ -542,6 +542,9 @@ function love.update(dt)
 				
 						local x = x2 * (tileSize * tilemapZoom)
 						local y = y2 * (tileSize * tilemapZoom)
+						
+						x2 = x2 + scrollbarOffset1
+						y2 = y2 + scrollbarOffset2
 				
 						map[x2][y2] = 0
 				
