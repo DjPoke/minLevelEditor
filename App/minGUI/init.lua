@@ -1159,7 +1159,8 @@ function minGUI_init()
 							rpapergreyed = 0.75, gpapergreyed = 0.75, bpapergreyed = 0.75, apapergreyed = 1,
 							rpen = 0, gpen = 0, bpen = 0, apen = 1,
 							offset = 0, editable = true, backspace = 0,
-							canvas = love.graphics.newCanvas(width - 4, height - 4)
+							canvas = love.graphics.newCanvas(width - 4, height - 4),
+							cursor_canvas = love.graphics.newCanvas(1, 1)
 						}
 						
 						-- set to not editable ?
@@ -1326,7 +1327,8 @@ function minGUI_init()
 							rpaper = 1, gpaper = 1, bpaper = 1, apaper = 1,
 							rpen = 0, gpen = 0, bpen = 0, apen = 1,
 							offset = 0, backspace = 0, press = 0,
-							canvas = love.graphics.newCanvas(width, height)
+							canvas = love.graphics.newCanvas(width, height),
+							cursor_canvas = love.graphics.newCanvas(1, 1)
 						}
 												
 						-- shift text left, if needed
@@ -1379,7 +1381,8 @@ function minGUI_init()
 							rpen = 0, gpen = 0, bpen = 0, apen = 1,
 							editable = true, cursorx = 0, cursory = 0, position = 0,
 							backspace = 0, delete = 0, up = 0, down = 0, left = 0, right = 0, ret = 0,
-							canvas = love.graphics.newCanvas(width - 4, height - 4)
+							canvas = love.graphics.newCanvas(width - 4, height - 4),
+							cursor_canvas = love.graphics.newCanvas(1, 1)
 						}
 						
 						-- set to not editable ?

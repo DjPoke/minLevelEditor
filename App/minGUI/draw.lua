@@ -377,8 +377,6 @@ function minGUI_draw_all()
 
 								if t < 500 then
 									minGUI_draw_text_cursor(w, v.x, v.y)
-								else
-									minGUI_hide_text_cursor(w, v.x, v.y)
 								end
 							-- if the focused gadget is a spin gadget...
 							elseif w.tp == MG_SPIN then
@@ -386,8 +384,6 @@ function minGUI_draw_all()
 						
 								if t < 500 then
 									minGUI_draw_text_cursor(w, v.x, v.y)
-								else
-									minGUI_hide_text_cursor(w, v.x, v.y)
 								end
 							-- if the focused gadget is an editor gadget...
 							elseif w.tp == MG_EDITOR then
@@ -395,8 +391,6 @@ function minGUI_draw_all()
 						
 								if t < 500 then
 									minGUI_draw_editor_cursor(w, v.x, v.y)
-								else
-									minGUI_hide_editor_cursor(w, v.x, v.y)
 								end
 							end
 						end
@@ -422,8 +416,6 @@ function minGUI_draw_all()
 				
 						if t < 500 then
 							minGUI_draw_text_cursor(w, 0, 0)
-						else
-							minGUI_hide_text_cursor(w, 0, 0)
 						end
 					-- if the focused gadget is a spin gadget...
 					elseif w.tp == MG_SPIN then
@@ -431,8 +423,6 @@ function minGUI_draw_all()
 						
 						if t < 500 then
 							minGUI_draw_text_cursor(w, 0, 0)
-						else
-							minGUI_hide_text_cursor(w, 0, 0)
 						end
 					-- if the focused gadget is an editor gadget...
 					elseif w.tp == MG_EDITOR then
@@ -440,8 +430,6 @@ function minGUI_draw_all()
 						
 						if t < 500 then
 							minGUI_draw_editor_cursor(w, 0, 0)
-						else
-							minGUI_hide_editor_cursor(w, 0, 0)
 						end
 					end
 				end
@@ -453,54 +441,61 @@ end
 
 -- draw the text cursor in the focused gadget
 function minGUI_draw_text_cursor(w, ox, oy)
-	local xc = 0
-	local yc = 0
-	
-	if w.tp == MG_STRING then
-		xc = ox + w.x + 2 + minGUI.font[minGUI.numFont]:getWidth(string.sub(w.text, w.offset + 1))
-		yc = oy + w.y + ((w.height - 2) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
-	elseif w.tp == MG_SPIN then
-		
-		xc = ox + w.x + (((w.width - minGUI.sprite[MG_SPIN_BUTTON_UP_IMAGE]:getWidth()) - minGUI.font[minGUI.numFont]:getWidth(w.text)) / 2) + minGUI.font[minGUI.numFont]:getWidth(w.text)
-		yc = oy + w.y + ((w.height - 2) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
-	end
-		
-	love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
-	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
-	love.graphics.setColor(1, 1, 1, 1)
-end
+	local xc1 = 0
+	local yc1 = 0
+	local xc2 = 0
+	local yc2 = 0
 
--- hide the text cursor in the focused gadget
-function minGUI_hide_text_cursor(w, ox, oy)
-	local xc = 0
-	local yc = 0
-	
+	-- draw the cursor at right place
 	if w.tp == MG_STRING then
-		xc = ox + w.x + 2 + minGUI.font[minGUI.numFont]:getWidth(string.sub(w.text, w.offset + 1))
-		yc = oy + w.y + ((w.height - 2) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
+		xc1 = ox + w.x + 2
+		yc1 = oy + w.y + 2
+		xc2 = minGUI.font[minGUI.numFont]:getWidth(minGUI_sub_string(w.text, w.offset + 1))
+		yc2 = ((w.height - 4) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
 	elseif w.tp == MG_SPIN then
-		xc = ox + w.x + 2 + minGUI.font[minGUI.numFont]:getWidth(string.sub(w.text, w.offset + 1))
-		yc = oy + w.y + ((w.height - 2) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
+		xc1 = ox + w.x
+		yc1 = oy + w.y
+		xc2 = (((w.width - minGUI.sprite[MG_SPIN_BUTTON_UP_IMAGE]:getWidth()) - minGUI.font[minGUI.numFont]:getWidth(w.text)) / 2) + minGUI.font[minGUI.numFont]:getWidth(w.text)
+		yc2 = ((w.height + 2) - minGUI.font[minGUI.numFont]:getHeight("|")) / 2
 	end
 	
-	love.graphics.setColor(w.rpaper, w.gpaper, w.bpaper, w.apaper)
-	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
+	-- resize cursor's canvas
+	if w.cursor_canvas:getWidth() ~= minGUI.font[minGUI.numFont]:getWidth("|") then
+		if w.cursor_canvas:getHeight() ~= minGUI.font[minGUI.numFont]:getHeight("|") then
+			w.cursor_canvas = love.graphics.newCanvas(minGUI.font[minGUI.numFont]:getWidth("|"), minGUI.font[minGUI.numFont]:getHeight("|"))
+		end
+	end
+
+	-- draw the cursor on its canvas
+	love.graphics.setCanvas(w.cursor_canvas)	
+	love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
+	love.graphics.print("|", 0, 0)
 	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setCanvas()	
+
+	-- draw the cursor on the text's canvas
+	love.graphics.setCanvas(w.canvas)	
+	love.graphics.draw(w.cursor_canvas, xc2, yc2 - 2)
+	love.graphics.setCanvas()	
+
+	-- draw the full canvas
+	love.graphics.draw(w.canvas, xc1, yc1)
 end
 
 -- draw the editor cursor
 function minGUI_draw_editor_cursor(w, ox, oy)
-	local xc = ox + w.x + 2
-	local yc = oy + w.y + 2
+	local xc1 = ox + w.x + 2
+	local yc1 = oy + w.y + 2
+	local xc2 = 0
+	local yc2 = 0
 
 	-- explode utf8 text
 	t = {}
-
 	t = minGUI_explode(w.text, "\n")
 	
 	--search for cursor y position
 	for y = 0, w.cursory - 1 do
-		yc = yc + minGUI.font[minGUI.numFont]:getHeight(t[y + 1])
+		yc2 = yc2 + minGUI.font[minGUI.numFont]:getHeight(t[y + 1])
 	end
 	
 	--search for cursor x position
@@ -510,44 +505,33 @@ function minGUI_draw_editor_cursor(w, ox, oy)
 		for x = 0, w.cursorx - 1 do
 			local c = minGUI_sub_string(t[w.cursory + 1], x + 1, x + 1)
 			
-			xc = xc + minGUI.font[minGUI.numFont]:getWidth(c)
+			xc2 = xc2 + minGUI.font[minGUI.numFont]:getWidth(c)
 		end
 	end
 	
+	-- resize cursor's canvas
+	if w.cursor_canvas:getWidth() ~= minGUI.font[minGUI.numFont]:getWidth("|") then
+		if w.cursor_canvas:getHeight() ~= minGUI.font[minGUI.numFont]:getHeight("|") then
+			w.cursor_canvas = love.graphics.newCanvas(minGUI.font[minGUI.numFont]:getWidth("|"), minGUI.font[minGUI.numFont]:getHeight("|"))
+		end
+	end
+	
+	-- draw the cursor on its canvas
+	love.graphics.setCanvas(w.cursor_canvas)
 	love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
-	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
+	love.graphics.print("|", 0, 0)
 	love.graphics.setColor(1, 1, 1, 1)
-end
+	love.graphics.setCanvas()
 
--- hide the editor cursor
-function minGUI_hide_editor_cursor(w, ox, oy)
-	local xc = ox + w.x + 2
-	local yc = oy + w.y + 2
-
-	-- explode utf8 text
-	t = {}
-
-	t = minGUI_explode(w.text, "\n")
-	
-	--search for cursor y position
-	for y = 0, w.cursory - 1 do
-		yc = yc + minGUI.font[minGUI.numFont]:getHeight(t[y + 1])
-	end
-	
-	--search for cursor x position
-	if w.cursory == #t then
-		-- don't move xc if at last line...
-	else
-		for x = 0, w.cursorx - 1 do
-			local c = minGUI_sub_string(t[w.cursory + 1], x + 1, x + 1)
-			
-			xc = xc + minGUI.font[minGUI.numFont]:getWidth(c)
-		end
-	end
-		
-	love.graphics.setColor(w.rpaper, w.gpaper, w.bpaper, w.apaper)
-	love.graphics.rectangle("fill", xc, yc, 1, minGUI.font[minGUI.numFont]:getHeight("|"))	
+	-- draw the cursor on the editor's canvas
+	love.graphics.setCanvas(w.canvas)
+	love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
+	love.graphics.draw(w.cursor_canvas, xc2, yc2 - 1)
 	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.setCanvas()
+
+	-- draw the full gadget's canvas
+	love.graphics.draw(w.canvas, xc1, yc1)
 end
 
 -- load 9-slice sprite
