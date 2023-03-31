@@ -684,19 +684,44 @@ end
 		
 -- draw and drop
 function love.filedropped(file)
-	filename = file:getFilename()
-	ext = filename:match("%.%w+$")
+	local filename = file:getFilename()
+	local ext = filename:match("%.%w+$")
+	local mx, my = love.mouse.getPosition()
+	local x1 = minGUI:get_panel_x(3) + minGUI:get_gadget_x(2)
+	local x2 = minGUI:get_panel_x(3) + minGUI:get_gadget_x(2) + minGUI:get_gadget_width(2)
+	local y1 = minGUI:get_panel_y(3) + minGUI:get_gadget_y(2)
+	local y2 = minGUI:get_panel_y(3) + minGUI:get_gadget_y(2) + minGUI:get_gadget_height(2)
 
+	-- must be a png file...
 	if ext == ".png" then
+		-- set the text filename
 		minGUI:set_gadget_text(7, "temp.png")
 
+		-- load the file
 		file:open("r")
+		
 		local fileData = file:read("data")
-
+		
+		file:close()
+		
 		local success, message = love.filesystem.write("temp.png", fileData)
 
 		if success then
-			load_tileset()
+			local flag = false
+			
+			-- load a tileset			
+			if mx >= x1 and mx < x2 then
+				if my >= y1 and my < y2 then
+					load_tileset()
+					
+					flag = true
+				end
+			end
+			
+			-- wrong drag n drop place ?
+			if flag == false then
+				minGUI:info_message("File must be drag'n dropped on the right place !")
+			end
 		else
 			minGUI:error_message("File can't be imported !")
 		end

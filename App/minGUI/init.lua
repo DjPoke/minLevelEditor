@@ -866,6 +866,24 @@ function minGUI_init()
 			
 			return minGUI.ptree[num].y
 		end,
+		get_panel_width = function(self, num)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param(num, "number") then minGUI_error_message("Wrong num value"); return end
+			
+			return minGUI.ptree[num].width
+		end,
+		get_panel_height = function(self, num)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param(num, "number") then minGUI_error_message("Wrong num value"); return end
+			
+			return minGUI.ptree[num].height
+		end,
 		get_gadget_x = function(self, num)
 			-- don't execute next instructions in case of exit process is true
 			if minGUI.exitProcess == true then return end
@@ -883,6 +901,24 @@ function minGUI_init()
 			if not minGUI_check_param(num, "number") then minGUI_error_message("Wrong num value"); return end
 			
 			return minGUI.gtree[num].y
+		end,
+		get_gadget_width = function(self, num)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param(num, "number") then minGUI_error_message("Wrong num value"); return end
+			
+			return minGUI.gtree[num].width
+		end,
+		get_gadget_height = function(self, num)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param(num, "number") then minGUI_error_message("Wrong num value"); return end
+			
+			return minGUI.gtree[num].height
 		end,
 		get_cursor_position = function(self, num)
 			-- don't execute next instructions in case of exit process is true
