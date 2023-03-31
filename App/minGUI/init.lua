@@ -15,6 +15,8 @@ function minGUI_init()
 	MG_SPIN = 9
 	MG_EDITOR = 10
 	MG_SCROLLBAR = 11
+	MG_INTERNAL_SCROLLBAR = 101
+	MG_INTERNAL_BOX = 102
 	
 	MG_PANEL_IMAGE = 1
 	MG_BUTTON_UP_IMAGE = 2
@@ -42,7 +44,9 @@ function minGUI_init()
 	MG_NOT_EDITABLE = 4
 	
 	MG_SCROLLBAR_VERTICAL = 8
-
+	
+	MG_NO_SCROLLBARS = 16
+	
 	MG_EVENT_LEFT_MOUSE_PRESSED = 1
 	MG_EVENT_LEFT_MOUSE_DOWN = 2
 	MG_EVENT_LEFT_MOUSE_RELEASED = 3
@@ -55,11 +59,13 @@ function minGUI_init()
 	
 	MG_EVENT_TIMER_TICK = 1
 
-	MIN_SCROLLBAR_BUTTON_SIZE = 8
+	MG_MIN_SCROLLBAR_BUTTON_SIZE = 8
 	
 	MG_SCROLLBAR_MIN_VALUE = 1
 	MG_SCROLLBAR_MAX_VALUE = 2
 	MG_SCROLLBAR_INCREMENT_VALUE = 3
+	
+	MG_SCROLLBAR_SIZE = 20
 	
 	-- init minGUI table
 	minGUI = {
@@ -67,10 +73,12 @@ function minGUI_init()
 		bgcolor = {r = 0.5, g = 0.5, b = 0.5, a = 1.0}, -- background color
 		ptree = {}, -- panel's tree
 		gtree = {}, -- gadgets's tree
+		igtree = {}, -- internal's gadgets tree
 		mouse = {x = 0, y = 0, oldmbtn = {}, mbtn = {}, mpressed = {}, mreleased = {}}, -- mouse events
 		estack = {}, -- events stack
 		ptimer = {}, -- programmable timers
 		tstack = {}, -- timers events stack
+		int_gadget = 0, -- internal gadgets numbers
 		timer = 0, -- time from start of the app
 		kbdelay = 0,
 		gfocus = nil, -- gadget focused
@@ -325,7 +333,7 @@ function minGUI_init()
 						
 						-- calculate button's other size
 						minGUI.gtree[num].min_size = minGUI.gtree[num].internalBarSize / minGUI.gtree[num].stepsValue
-						minGUI.gtree[num].size_width = math.max(minGUI.gtree[num].min_size, MIN_SCROLLBAR_BUTTON_SIZE)
+						minGUI.gtree[num].size_width = math.max(minGUI.gtree[num].min_size, MG_MIN_SCROLLBAR_BUTTON_SIZE)
 						minGUI.gtree[num].size_height = minGUI.gtree[num].size
 			
 						-- swap size_width & size_height ?
@@ -354,7 +362,7 @@ function minGUI_init()
 						
 						-- calculate button's other size
 						minGUI.gtree[num].min_size = minGUI.gtree[num].internalBarSize / minGUI.gtree[num].stepsValue
-						minGUI.gtree[num].size_width = math.max(minGUI.gtree[num].min_size, MIN_SCROLLBAR_BUTTON_SIZE)
+						minGUI.gtree[num].size_width = math.max(minGUI.gtree[num].min_size, MG_MIN_SCROLLBAR_BUTTON_SIZE)
 						minGUI.gtree[num].size_height = minGUI.gtree[num].size
 			
 						-- swap size_width & size_height ?
@@ -381,7 +389,7 @@ function minGUI_init()
 						
 						-- calculate button's other size
 						minGUI.gtree[num].min_size = minGUI.gtree[num].internalBarSize / minGUI.gtree[num].stepsValue
-						minGUI.gtree[num].size_width = math.max(minGUI.gtree[num].min_size, MIN_SCROLLBAR_BUTTON_SIZE)
+						minGUI.gtree[num].size_width = math.max(minGUI.gtree[num].min_size, MG_MIN_SCROLLBAR_BUTTON_SIZE)
 						minGUI.gtree[num].size_height = minGUI.gtree[num].size
 			
 						-- swap size_width & size_height ?
@@ -1389,6 +1397,15 @@ function minGUI_init()
 						if bit.band(flags, MG_NOT_EDITABLE) == MG_NOT_EDITABLE then
 							minGUI.gtree[num].editable = false
 						end
+
+						-- add internal scrollbars ?
+						if bit.band(flags, MG_NO_SCROLLBARS) == MG_NO_SCROLLBARS then
+							-- no internal scrollbars
+						else
+							minGUI:add_internal_scrollbar(minGUI.gtree[num].width - MG_SCROLLBAR_SIZE, 0, MG_SCROLLBAR_SIZE, minGUI.gtree[num].height - MG_SCROLLBAR_SIZE, 0, 0, 1, 1, MG_SCROLLBAR_VERTICAL, num)
+							minGUI:add_internal_scrollbar(0, minGUI.gtree[num].height - MG_SCROLLBAR_SIZE, minGUI.gtree[num].width - MG_SCROLLBAR_SIZE, MG_SCROLLBAR_SIZE, 0, 0, 1, 1, nil, num)
+							minGUI:add_internal_box(minGUI.gtree[num].width - MG_SCROLLBAR_SIZE, minGUI.gtree[num].height - MG_SCROLLBAR_SIZE, num)
+						end
 						
 						-- set the focus to the last editable gadget
 						minGUI.gfocus = num
@@ -1477,7 +1494,7 @@ function minGUI_init()
 
 			-- calculate button's other size
 			local min_size = internalBarSize / stepsValue
-			local size_width = math.max(min_size, MIN_SCROLLBAR_BUTTON_SIZE)
+			local size_width = math.max(min_size, MG_MIN_SCROLLBAR_BUTTON_SIZE)
 			local size_height = size
 			
 			-- swap size_width & size_height ?
@@ -1507,6 +1524,146 @@ function minGUI_init()
 					end
 				end
 			end			
+		end,
+		-- add an internal scrollbar gadget to the internal's gadgets tree
+		add_internal_scrollbar = function(self, x, y, width, height, value, minValue, maxValue, inc, flags, parent)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param2(x, "number") then minGUI_error_message("Wrong x for scrollbar " .. num); return end
+			if not minGUI_check_param2(y, "number") then minGUI_error_message("Wrong y for scrollbar " .. num); return end
+			if not minGUI_check_param(width, "number") then minGUI_error_message("Wrong width for scrollbar " .. num); return end
+			if not minGUI_check_param(height, "number") then minGUI_error_message("Wrong height for scrollbar " .. num); return end
+			if not minGUI_check_param2(value, "number") then minGUI_error_message("Wrong value for scrollbar " .. num); return end
+			if not minGUI_check_param2(minValue, "number") then minGUI_error_message("Wrong min value for scrollbar " .. num); return end
+			if not minGUI_check_param2(maxValue, "number") then minGUI_error_message("Wrong max value for scrollbar " .. num); return end
+			if not minGUI_check_param2(inc, "number") then minGUI_error_message("Wrong increment value for scrollbar " .. num); return end
+			if parent ~= nil and type(parent) ~= "number" then minGUI_error_message("Wrong parent for scrollbar " .. num); return end
+
+			minGUI.int_gadget = minGUI.int_gadget + 1
+			
+			local num = minGUI.int_gadget
+			
+			-- reset flags
+			if flags == nil then
+				flags = 0
+			elseif type(flags) ~= "number" then
+				minGUI_error_message("Wrong flags for scrollbar " .. num)
+				return
+			end
+
+			if x == nil then x = 0 end
+			if y == nil then y = 0 end
+			if value == nil then value = 0 end
+			if minValue == nil then minValue = 0 end
+			if inc == nil then inc = 1 end
+			
+			stepsValue = math.floor((maxValue - minValue) / inc) + 1
+			
+			if stepsValue < 1 then stepsValue = 1 end
+
+			local size = height
+			local internalBarSize = 0
+			
+			local real_width = width
+			local real_height = height
+
+			-- vertical or horizontal scrollbar ?
+			if bit.band(flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+				if maxValue == nil then maxValue = height end
+
+				-- get buttons size
+				size = width
+				
+				-- fix real height
+				real_height = height - (size * 2)
+				internalBarSize = real_height
+			else
+				if maxValue == nil then maxValue = width end				
+
+				-- get buttons size
+				size = height
+				
+				-- fix real width
+				real_width = width - (size * 2)
+				internalBarSize = real_width
+			end
+			
+			-- correction of value...
+			minValue = math.floor(minValue + 0.5)
+			maxValue = math.floor(maxValue + 0.5)
+
+			-- set the value of the gadget
+			local lng1 = (maxValue - minValue)
+			local lng2 = lng1 / stepsValue
+						
+			value = value - minValue
+			value = math.floor(value / lng2)
+			value = value * lng1 / (stepsValue - 1)
+			value = value + minValue
+			value = math.min(math.max(value, minValue), maxValue)
+
+			-- calculate button's other size
+			local min_size = internalBarSize / stepsValue
+			local size_width = math.max(min_size, MG_MIN_SCROLLBAR_BUTTON_SIZE)
+			local size_height = size
+			
+			-- swap size_width & size_height ?
+			if bit.band(flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+				local swap = size_height
+				size_height = size_width
+				size_width = swap
+			end
+							
+			-- initialize values
+			if minGUI.igtree[num] == nil then
+				if parent ~= nil and minGUI.gtree[parent] ~= nil then
+					if width > 0 and height > 0 then
+						minGUI.igtree[num] = {
+							num = num, tp = MG_INTERNAL_SCROLLBAR, x = x, y = y, width = width, height = height, flags = flags, parent = parent,
+							down = false, down1 = false, down2 = false,
+							real_width = real_width, real_height = real_height, size = size, internalBarSize = internalBarSize,
+							size_width = size_width, size_height = size_height, min_size = min_size,
+							value = value, minValue = minValue, maxValue = maxValue, stepsValue = stepsValue, inc = inc,
+							timer = 0,
+							rpen = 0, gpen = 0, bpen = 0, apen = 1,
+							canvas = love.graphics.newCanvas(real_width, real_height),
+							canvas1 = love.graphics.newCanvas(size, size),
+							canvas2 = love.graphics.newCanvas(size, size),
+							canvas3 = love.graphics.newCanvas(size_width, size_height)
+						}												
+					end
+				end
+			end			
+		end,
+		add_internal_box = function(self, x, y, parent)
+			-- don't execute next instructions in case of exit process is true
+			if minGUI.exitProcess == true then return end
+
+			-- check for values and types of values
+			if not minGUI_check_param2(x, "number") then minGUI_error_message("Wrong x for scrollbar " .. num); return end
+			if not minGUI_check_param2(y, "number") then minGUI_error_message("Wrong y for scrollbar " .. num); return end
+			if parent ~= nil and type(parent) ~= "number" then minGUI_error_message("Wrong parent for scrollbar " .. num); return end
+
+			minGUI.int_gadget = minGUI.int_gadget + 1
+			
+			local num = minGUI.int_gadget
+			
+			width = MG_SCROLLBAR_SIZE
+			height = MG_SCROLLBAR_SIZE
+			
+			-- initialize values
+			if minGUI.igtree[num] == nil then
+				if parent ~= nil and minGUI.gtree[parent] ~= nil then
+					if width > 0 and height > 0 then
+						minGUI.igtree[num] = {
+							num = num, tp = MG_INTERNAL_BOX, x = x, y = y, width = width, height = height, parent = parent,
+							canvas = love.graphics.newCanvas(width, height)
+						}												
+					end
+				end
+			end
 		end
 	}
 	

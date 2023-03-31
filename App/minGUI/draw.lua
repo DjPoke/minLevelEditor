@@ -236,10 +236,19 @@ function minGUI_draw_gadget(w, ox, oy)
 		love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
 
 		-- print the text
+		local ln = 0
+		
 		if w.text ~= "" then
-			love.graphics.print(w.text, 0, 0)
+			t = {}
+			t = minGUI_explode(w.text, "\n")
+			
+			for y = 1, #t do
+				love.graphics.print(t[y], 0, ln)
+				
+				ln = ln + minGUI.font[minGUI.numFont]:getHeight(t[y])
+			end
 		end
-								
+		
 		-- restore drawing on the window's canvas
 		love.graphics.setCanvas()
 		
@@ -259,6 +268,13 @@ function minGUI_draw_gadget(w, ox, oy)
 		-- draw the canvas
 		love.graphics.setColor(1, 1, 1, 1)
 		love.graphics.draw(w.canvas, ox + w.x + 2, oy + w.y + 2)
+		
+		-- draw internal scrollbars
+		for k, z in ipairs(minGUI.igtree) do
+			if z.parent == w.num then
+				minGUI_draw_internal_gadget(z, ox + w.x, oy + w.y)
+			end
+		end
 	elseif w.tp == MG_SCROLLBAR then
 		if bit.band(w.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
 			-- draw vertical scrollbar bar
@@ -343,10 +359,103 @@ function minGUI_draw_gadget(w, ox, oy)
 			love.graphics.draw(w.canvas2, ox + w.x + w.width - w.size, oy + w.y)
 			love.graphics.draw(w.canvas3, ox + w.x + w.size + offset, oy + w.y)
 		end
-
 	end
 end
 
+function minGUI_draw_internal_gadget(w, ox, oy)
+	if w.tp == MG_INTERNAL_SCROLLBAR then
+		if bit.band(w.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+			-- draw vertical scrollbar bar
+			minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.width , w.height - (w.size * 2), w.canvas)
+		else
+			-- draw horizontal scrollbar bar
+			minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.width - (w.size * 2), w.height, w.canvas)
+		end
+
+		-- draw scrollbar button 1
+		if not w.down1 then
+			minGUI_draw_9slice(MG_BUTTON_UP_IMAGE, w.size , w.size, w.canvas1)
+		else
+			minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.size , w.size, w.canvas1)
+		end
+
+		-- draw scrollbar button 2
+		if not w.down2 then
+			minGUI_draw_9slice(MG_BUTTON_UP_IMAGE, w.size , w.size, w.canvas2)
+		else
+			minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.size , w.size, w.canvas2)
+		end
+		
+		-- draw scrollbar button 3
+		minGUI_draw_9slice(MG_BUTTON_UP_IMAGE, w.size_width , w.size_height, w.canvas3)
+		
+		-- calculate arrows position and size
+		local size = math.floor(w.size / 2)
+		local x1 = math.floor((w.size - size) / 2)
+		local x2 = x1 + size
+		local x3 = x1 + math.floor(size / 2)
+
+		-- calculate triangle
+		p1 = {}
+		p2 = {}
+		
+		if bit.band(w.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+			p1 = {x1, x2, x2, x2, x3, x1}
+			p2 = {x1, x1, x2, x1, x3, x2}
+		else
+			p1 = {x2, x1, x2, x2, x1, x3}
+			p2 = {x1, x1, x1, x2, x2, x3}
+		end
+		
+		-- draw the text arrow on the gadget's canvas
+		love.graphics.setCanvas(w.canvas1)
+		
+		-- draw the text value in its area
+		love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
+		love.graphics.polygon("fill", p1)
+
+		-- draw the text arrow on the gadget's canvas
+		love.graphics.setCanvas(w.canvas2)
+		
+		-- draw the text value in its area
+		love.graphics.setColor(w.rpen, w.gpen, w.bpen, w.apen)
+		love.graphics.polygon("fill", p2)
+		
+		-- restore drawing on the window's canvas
+		love.graphics.setCanvas()
+		
+		-- draw the canvas to screen
+		love.graphics.setColor(1, 1, 1, 1)
+		
+		if bit.band(w.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+			-- draw vertical scrollbar bar at screen
+			love.graphics.draw(w.canvas, ox + w.x, oy + w.y + w.size)
+		else
+			-- draw horizontal scrollbar bar at screen
+			love.graphics.draw(w.canvas, ox + w.x + w.size, oy + w.y)
+		end
+		
+		-- calculate offset of the scrollbar central button
+		local offset = math.floor((w.value - w.minValue) / w.inc) * w.min_size
+		
+		if bit.band(w.flags, MG_SCROLLBAR_VERTICAL) == MG_SCROLLBAR_VERTICAL then
+			love.graphics.draw(w.canvas1, ox + w.x, oy + w.y)
+			love.graphics.draw(w.canvas2, ox + w.x, oy + w.y + w.height - w.size)
+			love.graphics.draw(w.canvas3, ox + w.x, oy + w.y + w.size + offset)
+		else
+			love.graphics.draw(w.canvas1, ox + w.x, oy + w.y)
+			love.graphics.draw(w.canvas2, ox + w.x + w.width - w.size, oy + w.y)
+			love.graphics.draw(w.canvas3, ox + w.x + w.size + offset, oy + w.y)
+		end
+	elseif w.tp == MG_INTERNAL_BOX then
+		-- draw a corner box
+		minGUI_draw_9slice(MG_BUTTON_DOWN_IMAGE, w.width , w.height, w.canvas)
+
+		-- draw the canvas to the screen		
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.draw(w.canvas, ox + w.x, oy + w.y)
+	end
+end
 
 -- function to call from love.draw()
 function minGUI_draw_all()
@@ -532,6 +641,13 @@ function minGUI_draw_editor_cursor(w, ox, oy)
 
 	-- draw the full gadget's canvas
 	love.graphics.draw(w.canvas, xc1, yc1)
+	
+	-- redraw internal scrollbars
+	for k, z in ipairs(minGUI.igtree) do
+		if z.parent == w.num then
+			minGUI_draw_internal_gadget(z, ox + w.x, oy + w.y)
+		end
+	end
 end
 
 -- load 9-slice sprite
