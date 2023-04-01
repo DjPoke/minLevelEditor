@@ -1,0 +1,6 @@
+TODO List:
+----------
+
+- Add the possibility to import animated (or not) sprites, to place them into the map, quantized to it or not.
+This can be done with a combobox, and a canvas to show the loaded sprites. All sprites can be dropped to this
+canvas.
