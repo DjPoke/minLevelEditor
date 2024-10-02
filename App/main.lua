@@ -119,7 +119,7 @@ function love.load()
 	minGUI:add_checkbox(10, 8, 548, 100, 25, "Zoom x 2", 3)
 
 	-- button to copy the map to clipboard
-	minGUI:add_button(11, 420, 548, 160, 25, "Copy map to clipboard", 2)
+	minGUI:add_button(11, 420, 548, 200, 25, "Copy löve map to clipboard", 2)
 
 	minGUI:add_label(12, 8, 8, 100, 25, "MAP SIZE", MG_ALIGN_CENTER,  6)
 	minGUI:add_spin(13, 8, 37, 100, 25, mapWidth, 1, MAX_MAP_SIZE, 6)
@@ -143,7 +143,10 @@ function love.load()
 	minGUI:add_string(22, 8, 37, 100, 25, "1.map", nil, 7)
 	minGUI:add_button(23, 8, 64, 100, 25, "Load map...", 7)
 	minGUI:add_button(24, 8, 91, 100, 25, "Save map...", 7)
-	
+
+	-- button to copy the map to clipboard
+	minGUI:add_button(25, 620, 548, 200, 25, "Copy ez80 map to clipboard", 2)
+
 	-- reset default focuset gadget
 	minGUI:set_focus(nil)
 
@@ -185,6 +188,9 @@ function love.update(dt)
 
 	-- ============================================
 
+	flag = false
+	if oldmapWidth ~= mapWidth or oldmapHeight ~= mapHeight then flag = true end
+	
 	oldmapWidth = mapWidth
 	oldmapHeight = mapHeight
 	
@@ -193,6 +199,15 @@ function love.update(dt)
 	
 	if w ~= "" then mapWidth = tonumber(w) end
 	if h ~= "" then mapHeight = tonumber(h) end
+
+	if flag then
+		-- resize scrollbars
+		resize_scrollbars()
+	
+		-- draw grids
+		redraw_tilemap_grid()
+		redraw_tileset_grid()
+	end
 	
 	if oldmapWidth ~= mapWidth or oldmapHeight ~= mapHeight then
 		minGUI:clear_canvas(1, 0, 0, 0, 1)
@@ -347,6 +362,17 @@ function love.update(dt)
 			end
 
 			export_string = export_string .. "}"
+
+			love.system.setClipboardText(export_string)
+		elseif eventGadget == 25 then
+			-- export the map
+			export_string = "map:\r\n"
+
+			for yexport = 0, mapHeight - 1 do
+				for xexport = 0, mapWidth - 1 do
+					export_string = export_string .. "	db " .. map[xexport][yexport] .. "\r\n"
+				end
+			end
 
 			love.system.setClipboardText(export_string)
 		elseif eventGadget == 2 then
