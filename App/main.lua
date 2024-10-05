@@ -2,7 +2,7 @@
 -- minLevelEditor
 --
 -- by DjPoke
--- (MIT) 2023
+-- (MIT) 2023-2024
 --================
 
 -- require minGUI
@@ -346,19 +346,22 @@ function love.update(dt)
 			export_string = "map = {\r\n"
 
 			for yexport = 0, mapHeight - 1 do
+				export_string = export_string .. "{"
+				
 				for xexport = 0, mapWidth - 1 do
-					export_string = export_string .. map[xexport][yexport] .. ","
+					num = map[xexport][yexport]
+					
+					if xexport < mapWidth - 1 then
+						export_string = export_string .. num .. ","
+					elseif yexport < mapHeight - 1 then
+						export_string = export_string .. num .. "},"
+					else
+						export_string = export_string .. num .. "}"
+					end
 				end
 
 				-- linefeed
 				export_string = export_string .. "\r\n"
-			end
-					
-			-- remove last comma
-			local byteoffset = utf8.offset(export_string, -1)
-
-			if byteoffset then
-				export_string = string.sub(export_string, 1, byteoffset - 1)
 			end
 
 			export_string = export_string .. "}"
